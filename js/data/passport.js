@@ -17,6 +17,36 @@ TAW.cards = {};
     ["His Essais (first published 1580) gave us the word “essay” — from essayer, “to try”.", "He retired at 38 to a tower library to read and write.", "His motto was “Que sais-je?” — “What do I know?”"],
     "“I am myself the matter of my book.”", ["Self-knowledge", "Scepticism", "socrates", "didion"],
     ["Montaigne basically invented the essay — the idea of thinking out loud about your own life.", "I love that his motto was a question: “What do I know?”"]);
+  C("terkel", "Studs Terkel, Working", "books", "1974", "Chicago, USA",
+    "An oral history in which more than a hundred Americans describe their jobs — a classic on the dignity, boredom and meaning of work.",
+    ["Full title: Working: People Talk About What They Do All Day and How They Feel About What They Do.", "Terkel (1912–2008) was a Chicago radio broadcaster and master interviewer.", "He later won the Pulitzer Prize for The Good War (1985), an oral history of World War II."],
+    "Work is “a search, too, for daily meaning as well as daily bread.”", ["Work", "Oral history", "sdt"],
+    ["Terkel showed that ordinary people talking about ordinary jobs say profound things.", "He said work is a search for daily meaning as well as daily bread."]);
+  C("frost", "Robert Frost, “The Road Not Taken”", "books", "1916", "USA",
+    "One of the most quoted — and most misread — poems in English, usually taken as praise for bold, unconventional choices.",
+    ["First published in 1915 and collected in Mountain Interval (1916).", "The poem says the two roads were worn “really about the same”.", "Frost wrote it partly as a gentle joke about his friend, the poet Edward Thomas, who always regretted the path not taken on their walks."],
+    "We choose — and then tell the story as if the choice made all the difference.", ["Decisions", "counterfactual", "Memory"],
+    ["Everyone quotes “The Road Not Taken” as a call to be bold, but the poem is more ironic than that.", "The roads were basically the same — the difference is in the story we tell later."]);
+  C("lingua-franca", "English as a lingua franca", "cultures", "1990s–", "Global",
+    "Most English conversations today happen between non-native speakers — which changes what “good English” means.",
+    ["Estimates suggest roughly 1.5 billion people speak English, most of them as a second or additional language.", "Linguist Jennifer Jenkins’ “Lingua Franca Core” (2000) identified the pronunciation features that matter most for intelligibility.", "Features like the “th” sound turned out to matter far less than word stress and vowel length."],
+    "The goal is intelligibility, not imitation.", ["Pronunciation", "Identity", "hall"],
+    ["Most English is spoken between non-native speakers now — so my accent is just one of many.", "Research suggests stress and rhythm matter more than sounding native."]);
+  C("aristotle-friendship", "Aristotle on friendship", "ideas", "4th century BCE", "Greece",
+    "Aristotle devoted two books of the Nicomachean Ethics to friendship, distinguishing friendships of utility, pleasure and virtue.",
+    ["Friendships of utility and pleasure fade when the usefulness or pleasure ends.", "Friendships of virtue — based on admiring each other’s character — are rare, slow to form and lasting.", "He called a true friend “another self”."],
+    "Without friends no one would choose to live, though he had all other goods.", ["eudaimonia", "Relationships", "ubuntu"],
+    ["Aristotle would say that was a friendship of utility — it ended when the job ended.", "The best friendships, for Aristotle, are based on admiring who someone is."]);
+  C("counterfactual", "Counterfactual thinking", "concepts", "1980s–", "Psychology",
+    "Imagining “what might have been” — a habit that shapes regret, learning and even happiness.",
+    ["Kahneman and Tversky described the “simulation heuristic” — how we imagine alternatives — in 1982.", "Medvec, Madey & Gilovich (1995) found Olympic bronze medallists often appeared happier than silver medallists.", "Upward counterfactuals (“it could have been better”) breed regret; downward ones (“it could have been worse”) breed relief."],
+    "How you imagine the alternative shapes how you feel about what happened.", ["kahneman", "frost", "Regret"],
+    ["It’s the silver-medal problem — you compare yourself with gold, not with no medal.", "A downward counterfactual is basically gratitude."]);
+  C("carnegie", "Dale Carnegie, How to Win Friends and Influence People", "business", "1936", "USA",
+    "One of the best-selling self-help books ever written — about attention, appreciation and genuine interest in others.",
+    ["It has sold many millions of copies and is still in print.", "Carnegie changed the spelling of his surname from “Carnagey”, reportedly to echo the industrialist Andrew Carnegie.", "Critics see manipulation in its techniques; admirers see simple kindness."],
+    "You make more friends in two months by being interested in others than in two years trying to make them interested in you.", ["cialdini", "Conversation", "rogers"],
+    ["Carnegie’s whole book comes down to being genuinely interested in people.", "The techniques only work when the interest is real."]);
   C("evelyn-hall", "Evelyn Beatrice Hall & “Voltaire’s” quote", "women", "1868–1956", "England",
     "Wrote the most famous line about free speech — which almost everyone attributes to Voltaire. A lesson in checking sources.",
     ["In The Friends of Voltaire (1906), writing as S. G. Tallentyre, she summarised his attitude: “I disapprove of what you say, but I will defend to the death your right to say it.”", "Voltaire never wrote the sentence.", "She later confirmed it was her own phrase, not a quotation."],

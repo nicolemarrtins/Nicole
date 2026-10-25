@@ -1,8 +1,8 @@
 /* Offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "taw-v1";
+const VERSION = "taw-v2";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/styles.css",
-  "js/data/curriculum.js", "js/data/lessons-a.js", "js/data/lessons-b.js", "js/data/passport.js",
+  "js/data/curriculum.js", "js/data/lessons-a.js", "js/data/lessons-b.js", "js/data/lessons-c.js", "js/data/lessons-d.js", "js/data/passport.js",
   "js/data/library.js", "js/data/extras.js", "js/store.js", "js/analysis.js", "js/ai.js",
   "js/lessons.js", "js/views.js", "js/app.js", "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"
 ];

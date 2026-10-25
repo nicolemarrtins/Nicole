@@ -59,7 +59,7 @@ TAW.map = {};
   d(15, "Talking about work without sounding like a CV", "english", "F",
     "Describe what you actually do, what it demands and what you contribute — instead of reciting a job title. Move from role → problem → contribution → what you enjoy.",
     "responsibility=a duty you are trusted with|contribute=to give something that helps a result|demanding=needing a lot of effort or skill|rewarding=giving satisfaction, even if not money|day-to-day=ordinary, routine",
-    "Studs Terkel, Working (1974) — an oral history in which 130+ Americans describe their jobs; a classic on the dignity and frustration of work.",
+    "terkel",
     "Is your job part of your identity — or just something you do? Should it be?",
     "Describe your work to someone outside your field — what you do, what’s hard about it, and what you’d miss if you left.", 90,
     "What I actually spend my day doing is…|The part people don’t see is…|What I find most rewarding is…");
@@ -73,7 +73,7 @@ TAW.map = {};
   d(17, "Explaining a decision", "english", "F",
     "A decision explained well has a rationale, a trade-off and an outcome. Learn to say what you weighed, what you gave up and why — without over-justifying.",
     "weigh up=to consider the advantages and disadvantages|trade-off=accepting a loss in one thing to gain another|rationale=the reasons behind a decision|ultimately=in the end, after considering everything",
-    "Robert Frost, “The Road Not Taken” (1916) — often read as praise for nonconformity, but the poem says both roads were “really about the same”; the speaker will later tell the story as if it made “all the difference”.",
+    "frost",
     "Do we make decisions for reasons — or invent the reasons afterwards?",
     "Explain an important decision you made: what you weighed up, the trade-off, and whether you’d make it again.", 90,
     "I weighed up… against…|The trade-off was…|Ultimately, what tipped the balance was…");
@@ -94,14 +94,14 @@ TAW.map = {};
   d(20, "Pronunciation: stress, rhythm and pause", "english", "F",
     "Clarity in English depends less on individual sounds than on word stress, sentence stress and pausing in “thought groups”. The goal is intelligibility, not a native accent.",
     "intonation=the rise and fall of the voice|emphasis=special importance given to a word|pause=a short stop in speaking|intelligible=able to be understood",
-    "English as a lingua franca — most English conversations worldwide now take place between non-native speakers; researchers such as Jennifer Jenkins argue intelligibility, not native-likeness, should be the goal.",
+    "lingua-franca",
     "Do you feel judged for your accent? Do you judge others for theirs?",
     "Read a paragraph you wrote this week aloud, slowly, marking the pauses. Then say it again without reading.", 60,
     "What I mean is… (pause)…|The key word here is…");
   d(22, "Talking about relationships", "english", "F",
     "Friendship, love and family need a vocabulary of closeness, distance and change. Learn to talk about relationships with warmth and discretion.",
     "rapport=a friendly relationship where people understand each other|drift apart=to become less close gradually|mutual=felt or done by both sides|devoted=very loving and loyal",
-    "Aristotle on friendship — in the Nicomachean Ethics he distinguishes friendships of utility, of pleasure, and of virtue (the rarest and most lasting).",
+    "aristotle-friendship",
     "Which of your friendships are of utility, pleasure, or virtue — in Aristotle’s terms? Is that a fair way to see them?",
     "Describe a friendship that has changed over time — what brought you together and what changed.", 90,
     "We clicked straight away.|We’ve drifted apart a little.|There’s a mutual respect…");
@@ -115,7 +115,7 @@ TAW.map = {};
   d(24, "Hypotheticals: “If I had…”", "english", "F",
     "Conditionals let you imagine, regret and speculate. Master the second and third conditionals and mixed forms.",
     "regret=a feeling of sadness about something you did or didn’t do|plausible=seeming reasonable or probable|conceivably=possibly|alternative=another possibility",
-    "Counterfactual thinking — psychologists find that imagining “what might have been” shapes regret and learning; famously, Olympic bronze medallists often appear happier than silver medallists (Medvec, Madey & Gilovich, 1995).",
+    "counterfactual",
     "Is it useful to think about the roads not taken — or only painful?",
     "If you had made one different choice ten years ago, how might your life be different now?", 90,
     "If I had…, I would probably…|Conceivably, I could have…|I don’t regret it, but I wonder…");
@@ -136,7 +136,7 @@ TAW.map = {};
   d(27, "Small talk that isn’t small", "conversation", "F",
     "Small talk builds trust. Learn to start with the ordinary and move — gently — to the interesting.",
     "genuinely=truly, sincerely|relate to=to understand and feel sympathy|break the ice=to make people feel relaxed|bond over=to become closer through a shared interest",
-    "Dale Carnegie, How to Win Friends and Influence People (1936) — one of the best-selling self-help books ever; its core advice is to be genuinely interested in other people.",
+    "carnegie",
     "Is small talk superficial — or a necessary social ritual?",
     "Start a conversation with a stranger at a party about something you can both see, and move it to something interesting in three steps.", 60,
     "I couldn’t help noticing…|How do you know the host?|That’s fascinating — how did you…?");

@@ -109,7 +109,7 @@ Journal     { id, date, prompt, text, kind(reflection|weekly|milestone|free) }
 MyWord      { word, meaning, pron, example, added, uses, stage }
 ```
 
-Days 1–14 are fully hand-written (`lessons-a.js`, `lessons-b.js`). Days 15–180 are defined
+Days 1–29 are fully hand-written (`lessons-a.js` … `lessons-d.js`); Day 30 is the Month 1 milestone. Days 31–180 are defined
 in the curriculum map with title, focus, four defined words, a cultural reference,
 a thinking question and a speaking prompt; the app renders them as complete lessons, and —
 if the learner adds an Anthropic API key — can expand any of them into a fully written
