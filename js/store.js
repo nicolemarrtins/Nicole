@@ -60,7 +60,7 @@ window.TAW = window.TAW || {};
     for (let d = 1; d <= 180; d++) if (!state.completed[d]) return d;
     return 180;
   }
-  function completedCount() { return Object.keys(state.completed).length; }
+  function completedCount() { return Object.keys(state.completed).filter(function (k) { return /^\d+$/.test(k); }).length; }
 
   /* ── Spaced repetition ── */
   const INTERVALS = [1, 3, 7, 14, 30, 60];
@@ -174,7 +174,7 @@ window.TAW = window.TAW || {};
   function lessonsBySkill() {
     const out = { english: 0, culture: 0, articulation: 0, thinking: 0, conversation: 0 };
     Object.keys(state.completed).forEach(function (d) {
-      const l = TAW.getLesson(+d);
+      const l = TAW.getLesson(d);
       const skills = l.skills || TAW.categorySkills[l.cat] || [];
       skills.forEach(function (s) { if (out[s] !== undefined) out[s]++; });
     });

@@ -362,3 +362,12 @@ details summary { cursor: pointer; color: var(--accent); font-size: .88rem; marg
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 @media (min-width: 521px) { .map-hint { display: none; } }
+
+/* ── Studio ── */
+.track h2 { margin-top: .1em; }
+.track-list { list-style: none; padding: 0; margin: 0; }
+.track-list li a { display: flex; gap: 12px; align-items: baseline; padding: .55em 0; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.track-list li a:hover span:last-child { color: var(--accent); }
+.tl-n { flex: none; width: 1.8em; font: 500 1.05rem var(--serif); color: var(--muted); }
+.track-list li.done .tl-n { color: var(--sage); }
+.inline-fieldset input, .form fieldset input { margin-bottom: 6px; }

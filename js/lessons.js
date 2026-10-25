@@ -138,11 +138,19 @@ window.TAW = window.TAW || {};
     });
   }
 
+  function trackLesson(key) {
+    const t = TAW.trackLessons[key], tr = TAW.tracks[t.track];
+    return Object.assign({ day: key, month: null, type: "track", minutes: 25, label: tr.short + " · " + t.n }, t, {
+      cat: t.cats[0], kicker: tr.title + " · " + (t.module || ""), trackTitle: tr.title
+    });
+  }
+
   function get(day) {
-    day = +day;
+    day = TAW.dayKey(day);
     if (cache[day]) return cache[day];
     let L;
-    if (TAW.lessons[day]) {
+    if (typeof day === "string") L = TAW.trackLessons && TAW.trackLessons[day] ? trackLesson(day) : Object.assign(base(1), { day: day, title: "Not found", cat: "english", cats: ["english"], vocab: [], learn: { body: [], phrases: [] } });
+    else if (TAW.lessons[day]) {
       L = Object.assign(base(day), TAW.lessons[day]);
       L.cat = L.cats[0];
       if (L.type === "review") { L.weekly = true; L.weekDays = weekDays(day); }
@@ -152,6 +160,7 @@ window.TAW = window.TAW || {};
     else if (TAW.map[day]) L = fromMap(day);
     else L = Object.assign(base(day), { title: "Day " + day, cat: "english", cats: ["english"], vocab: [], learn: { body: [], phrases: [] } });
     if (day === 7) L.milestone = TAW.milestones[7];
+    if (L.type === "review" && TAW.trackLessons && TAW.trackLessons["b" + (day / 7)]) L.science = "b" + (day / 7);
     cache[day] = L;
     return L;
   }
@@ -163,7 +172,7 @@ window.TAW = window.TAW || {};
     const all = [
       ["learn", "Learn", 5, 4], ["vocab", "Words", 5, 3], ["culture", "Culture", 4, 0], ["sayBetter", "Say it better", 3, 0],
       ["exercise", "Practise", 3, 0], ["think", "Think", 2, 0], ["express", "Write", 4, 0], ["speak", "Speak", 3, 3],
-      ["graduation", "The Test", 25, 25], ["weekly", "Weekly reflection", 6, 4], ["recall", "Recall", 2, 2], ["reflect", "Reflect", 2, 1], ["deep", "Go deeper", 15, 0]
+      ["graduation", "The Test", 25, 25], ["science", "The science", 2, 2], ["weekly", "Weekly reflection", 6, 4], ["recall", "Recall", 2, 2], ["reflect", "Reflect", 2, 1], ["deep", "Go deeper", 15, 0]
     ];
     const has = function (k) {
       if (k === "culture") return !!(L.culture || L.cultureRef);
@@ -171,7 +180,7 @@ window.TAW = window.TAW || {};
       if (k === "recall") return L.recall && L.recall.length;
       return !!L[k];
     };
-    const quick = ["learn", "vocab", "speak", "recall", "reflect", "weekly", "graduation"];
+    const quick = ["learn", "vocab", "speak", "recall", "reflect", "weekly", "graduation", "science"];
     return all.filter(function (s) {
       if (!has(s[0])) return false;
       if (mode === "quick") return quick.indexOf(s[0]) >= 0;
@@ -204,6 +213,12 @@ window.TAW = window.TAW || {};
   }
 
   TAW.getLesson = get;
+  TAW.lessonLabel = function (L) { return L.label || "Day " + L.day; };
+  TAW.nextTrackKey = function (L) {
+    if (!L.track) return null;
+    const keys = TAW.tracks[L.track].modules.reduce(function (a, m) { return a.concat(m.lessons); }, []);
+    return keys[keys.indexOf(L.day) + 1] || null;
+  };
   TAW.lessonSections = sections;
   TAW.lessonMinutes = minutesFor;
   TAW.invalidateLesson = invalidate;

@@ -807,4 +807,5 @@ TAW.map = {};
 TAW.isReview = function (day) { return day % 7 === 0; };
 TAW.milestoneDays = [7, 30, 60, 90, 120, 150, 180];
 TAW.isMilestone = function (day) { return day % 30 === 0; };
+TAW.dayKey = function (v) { return /^\d+$/.test(String(v)) ? +v : String(v); };
 TAW.monthOf = function (day) { return Math.min(6, Math.ceil(day / 30)); };

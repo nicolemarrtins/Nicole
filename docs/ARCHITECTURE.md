@@ -127,6 +127,15 @@ lesson that is cached locally for offline use.
 * Speaking uses the browser's microphone (MediaRecorder) and speech recognition where
   available (Safari iOS 14.5+, Chrome). Typing is always available as a fallback.
 
+## 8b. Studio tracks
+
+Two parallel tracks keep the 180-day cultural arc intact while adding professional and scientific depth:
+
+* **The Senior Voice** — 24 weekly lessons in five modules (presence & style, AI for leaders, automation & operations, e-commerce, capstone). Same lesson anatomy as the main journey; examples aimed at senior corporate roles.
+* **The Learning Brain** — 8 weekly lessons on neuroplasticity and learning science, scheduled for weeks 1–8. Each weekly review (Days 7–56) links to the matching lesson, so the method is explained exactly when it is being used.
+
+Track lessons use string keys (`v1`…`v24`, `b1`…`b8`) and share the lesson renderer, review system and Passport. Home shows the earliest incomplete lesson scheduled up to the current week. A `profile.work` field (role, industry, focus) personalises every “Ask Claude” prompt.
+
 ## 9. UI architecture
 
 Single-page app, hash router, no framework, no build step.

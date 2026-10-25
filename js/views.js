@@ -124,6 +124,9 @@ window.TAW = window.TAW || {};
           </div></fieldset>
         <fieldset><legend class="lbl">What are you curious about? <span class="muted small">(choose any — this shapes suggestions)</span></legend>
           <div class="chips">${cats.map(function (c) { return `<label class="chip-check"><input type="checkbox" name="interests" value="${c}"><span>${catLabel(c)}</span></label>`; }).join("")}</div></fieldset>
+        <label class="lbl">Your work <span class="muted small">(optional — tailors professional content)</span>
+          <input name="role" placeholder="Role, e.g. Head of E-commerce Operations" autocomplete="organization-title">
+          <input name="industry" placeholder="Industry, e.g. retail, fintech, logistics"></label>
         <label class="lbl">In one sentence: who do you want to be in six months? <span class="muted small">(any language)</span>
           <textarea name="goal" rows="2" placeholder="A woman who…"></textarea></label>
         <button class="btn primary big" type="submit">Begin Day 1</button>
@@ -174,6 +177,7 @@ window.TAW = window.TAW || {};
         ${Object.keys(strands).map(function (k) { return bar(k, strands[k], 100); }).join("")}
         <p class="fine">Indicators of practice, not precise measurements. <a href="#/progress">See your full profile →</a></p>
       </section>
+      ${studioBlock()}
       ${sug.length ? `<section class="block"><h3 class="section-title">Suggested for you</h3><div class="sug">${sug.join("")}</div></section>` : ""}
       <section class="block tools">
         <h3 class="section-title">Tools</h3>
@@ -218,7 +222,7 @@ window.TAW = window.TAW || {};
 
   /* ───────────── Lesson ───────────── */
   function lesson(day, sec) {
-    day = +day;
+    day = TAW.dayKey(day);
     const L = TAW.getLesson(day), st = S.state, mode = st.profile.mode;
     const secs = TAW.lessonSections(L, mode);
     if (sec === "finish") return finish(L);
@@ -227,11 +231,11 @@ window.TAW = window.TAW || {};
     const prog = st.progress[day] || {};
     const next = secs[i + 1] ? `#/lesson/${day}/${secs[i + 1][0]}` : `#/lesson/${day}/finish`;
     const prev = secs[i - 1] ? `#/lesson/${day}/${secs[i - 1][0]}` : null;
-    const ahead = day > S.currentDay() && !st.completed[day];
+    const ahead = !L.track && day > S.currentDay() && !st.completed[day];
     return `<section class="lesson">
-      <a class="back" href="#/">← Today</a>
+      ${L.track ? `<a class="back" href="#/studio">← Studio</a>` : `<a class="back" href="#/">← Today</a>`}
       <header class="lesson-head">
-        <p class="kicker">Day ${day} · ${esc(L.kicker || "")}</p>
+        <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.kicker || "")}</p>
         <h1>${esc(L.title)}</h1>
         <p class="muted small">${esc(L.difficulty || "")} · ${TAW.lessonMinutes(L, mode)} min · ${mode} mode ${st.completed[day] ? "· ✓ completed" : ""}</p>
         ${ahead ? `<p class="note small">You’re ahead of your current day (${S.currentDay()}). That’s fine — explore freely.</p>` : ""}
@@ -315,6 +319,12 @@ window.TAW = window.TAW || {};
       case "graduation": return `<p class="sec-label">The Articulate Woman Test</p><p>Seven parts. Speak each one. When you finish, your <a href="#/progress/transformation">180-Day Transformation</a> is waiting.</p>
         ${L.graduation.map(function (g) { return `<h3>Part ${g.part} — ${esc(g.title)}</h3>` + speakBox({ id: "grad" + g.part, prompt: g.prompt, seconds: g.seconds, tag: "graduation", day: 180, constraint: false }); }).join("")}`;
       case "weekly": return weeklyBlock(L);
+      case "science": {
+        const b = TAW.getLesson(L.science), done = S.state.completed[L.science];
+        return `<p class="sec-label">The science of learning</p><p class="muted">This week’s review works because of how memory and the brain work. Here is the science behind it — the Learning Brain lesson for Week ${b.n}.</p>
+          <a class="sug-item" href="#/lesson/${L.science}"><span class="kicker">The Learning Brain · ${b.n} ${done ? "· ✓ completed" : "· about 25 min"}</span><b>${esc(b.title)}</b><span class="small muted">${esc(b.why)}</span></a>
+          ${b.culture && TAW.cards[b.culture] ? `<blockquote class="idea">${esc(TAW.cards[b.culture].idea)}</blockquote>` : ""}`;
+      }
       case "recall": return `<p class="sec-label">Recall</p><p class="muted">Try to answer before you reveal. Retrieval is where memory is built.</p>
         <ol class="recall">${L.recall.map(function (r, i) { return `<li data-recall="${i}"><p class="q">${esc(r.q)}</p><details><summary>Reveal</summary><p class="model">${esc(r.a)}</p>
           <div class="row"><button class="pill" data-act="recall-rate" data-ok="1" data-word="${esc(r.word || "")}">I knew it</button><button class="pill" data-act="recall-rate" data-ok="0" data-word="${esc(r.word || "")}">Not yet</button></div></details></li>`; }).join("")}</ol>`;
@@ -366,15 +376,52 @@ window.TAW = window.TAW || {};
     return `<section class="lesson finish">
       <a class="back" href="#/lesson/${L.day}">← Back to lesson</a>
       <div class="card center">
-        <p class="kicker">Day ${L.day} · ${esc(L.title)}</p>
+        <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.title)}</p>
         <h1 class="serif">${done ? "Completed." : "Well done."}</h1>
         <p class="lede">${L.vocab && L.vocab.length ? L.vocab.length + " words enter your review cycle. " : ""}${card ? esc(card.name) + " joins your Cultural Passport. " : ""}Your reflection goes to your Journal.</p>
         ${done ? "" : `<p class="lbl">How interesting was today’s topic for you?</p>
         <div class="row center">${[[1, "Not for me"], [2, "Interesting"], [3, "Fascinating"]].map(function (r) { return `<button class="pill" data-act="rate-lesson" data-v="${r[0]}">${r[1]}</button>`; }).join("")}</div>
-        <button class="btn primary big" data-act="complete" data-day="${L.day}">Mark Day ${L.day} complete</button>`}
-        ${done ? `<div class="row center"><a class="btn primary" href="#/">Back to Today</a><a class="btn" href="#/lesson/${L.day + 1 <= 180 ? L.day + 1 : 180}">Preview Day ${Math.min(180, L.day + 1)}</a></div>` : ""}
-        <p class="mentor">“${esc(TAW.mentorLines[L.day % TAW.mentorLines.length])}”</p>
+        <button class="btn primary big" data-act="complete" data-day="${L.day}">Mark ${esc(TAW.lessonLabel(L))} complete</button>`}
+        ${done && !L.track ? `<div class="row center"><a class="btn primary" href="#/">Back to Today</a><a class="btn" href="#/lesson/${L.day + 1 <= 180 ? L.day + 1 : 180}">Preview Day ${Math.min(180, L.day + 1)}</a></div>` : ""}
+        ${done && L.track ? `<div class="row center"><a class="btn primary" href="#/studio">Back to Studio</a>${TAW.nextTrackKey(L) ? `<a class="btn" href="#/lesson/${TAW.nextTrackKey(L)}">Next: ${esc(TAW.getLesson(TAW.nextTrackKey(L)).title)}</a>` : ""}</div>` : ""}
+        <p class="mentor">“${esc(TAW.mentorLines[(L.n || L.day) % TAW.mentorLines.length])}”</p>
       </div>
+    </section>`;
+  }
+
+  /* ───────────── Studio (tracks) ───────────── */
+  function studioWeek() { return Math.max(1, Math.ceil(S.currentDay() / 7)); }
+  function thisWeekTrack(trackId) {
+    const keys = TAW.tracks[trackId].modules.reduce(function (a, m) { return a.concat(m.lessons); }, []);
+    const st = S.state, wk = studioWeek();
+    const due = keys.slice(0, wk).find(function (k) { return !st.completed[k]; });
+    return due || (wk < keys.length ? null : null);
+  }
+  function studioCard(key, label) {
+    const L = TAW.getLesson(key), done = S.state.completed[key];
+    return `<a class="sug-item" href="#/lesson/${key}"><span class="kicker">${esc(label || L.label)}${done ? " · ✓" : ""}</span><b>${esc(L.title)}</b><span class="small muted">${esc((L.why || "").slice(0, 140))}${(L.why || "").length > 140 ? "…" : ""}</span></a>`;
+  }
+  function studioBlock() {
+    const v = thisWeekTrack("voice"), b = thisWeekTrack("brain");
+    if (!v && !b) return "";
+    return `<section class="block"><h3 class="section-title">This week in the Studio</h3>
+      ${v ? studioCard(v, "The Senior Voice · " + TAW.getLesson(v).n + " of 24") : ""}${b ? studioCard(b, "The Learning Brain · " + TAW.getLesson(b).n + " of 8") : ""}
+      <p class="fine"><a href="#/studio">Open the Studio →</a></p></section>`;
+  }
+  function studio() {
+    const st = S.state, w = st.profile.work || {};
+    return `<section>${header("Professional & science tracks", "Studio", "Two tracks that run alongside the main journey — one lesson a week each, at your own pace.")}
+      ${!w.role && !w.industry ? `<p class="note small">Tell the app about your work in <a href="#/settings">Settings → Your work</a>, and every “Ask Claude” request will be tailored to your role and industry.</p>` : `<p class="small muted">Tailored to: ${esc([w.role, w.industry].filter(Boolean).join(" · "))} <a href="#/settings">edit</a></p>`}
+      ${["voice", "brain"].map(function (id) {
+        const t = TAW.tracks[id];
+        const keys = t.modules.reduce(function (a, m) { return a.concat(m.lessons); }, []);
+        const doneN = keys.filter(function (k) { return st.completed[k]; }).length;
+        return `<article class="card track"><p class="kicker">${doneN} of ${keys.length} completed · ${esc(t.cadence)}</p><h2 class="serif">${esc(t.title)}</h2><p class="lede">${esc(t.subtitle)}</p>
+          <div class="progress-line"><i style="width:${Math.round(doneN / keys.length * 100)}%"></i></div>
+          ${t.modules.map(function (m) { return `<h4>${esc(m.title)}</h4><ol class="track-list">${m.lessons.map(function (k) { const L = TAW.getLesson(k), d = st.completed[k];
+            return `<li class="${d ? "done" : ""}"><a href="#/lesson/${k}"><span class="tl-n">${d ? "✓" : L.n}</span><span>${esc(L.title)}</span></a></li>`; }).join("")}</ol>`; }).join("")}
+        </article>`;
+      }).join("")}
     </section>`;
   }
 
@@ -410,6 +457,8 @@ window.TAW = window.TAW || {};
     const list = filter ? all.filter(function (c) { return c.cat === filter; }) : all;
     const dayOf = {};
     for (let d = 1; d <= 180; d++) { const m = TAW.map[d]; const ref = TAW.lessons[d] ? TAW.lessons[d].culture : m && m.ref; if (ref && TAW.cards[ref] && !dayOf[ref]) dayOf[ref] = d; }
+    const studioOf = {};
+    Object.keys(TAW.trackLessons || {}).forEach(function (k) { const t = TAW.trackLessons[k]; if (t.culture && !studioOf[t.culture]) studioOf[t.culture] = TAW.tracks[t.track].short + " " + t.n; });
     list.sort(function (a, b) { return (st.passport[b.id] ? 1 : 0) - (st.passport[a.id] ? 1 : 0) || (dayOf[a.id] || 999) - (dayOf[b.id] || 999); });
     return `<section>${header("Collection", "Cultural Passport", got + " of " + all.length + " references collected. Each one is something you can now talk about.")}
       ${tabs([["passport", "#/culture", "Passport"], ["map", "#/culture/map", "Intellectual map"]], "passport")}
@@ -421,7 +470,7 @@ window.TAW = window.TAW || {};
         const has = st.passport[c.id], pc = passCat(c.cat);
         return `<a class="pass ${has ? "has" : ""}" href="#/card/${c.id}"><span class="pass-cat"><span aria-hidden="true">${pc[1]}</span> ${esc(pc[2])}</span>
           <b class="serif">${esc(c.name)}</b><span class="small muted">${esc(c.period)}</span>
-          <span class="pass-status small">${has ? "✓ Collected" + (has.day ? " · Day " + has.day : "") : dayOf[c.id] ? "Arrives Day " + dayOf[c.id] : "Not yet visited"}</span></a>`;
+          <span class="pass-status small">${has ? "✓ Collected" + (has.day ? " · " + (typeof has.day === "number" ? "Day " + has.day : esc(TAW.getLesson(has.day).label)) : "") : dayOf[c.id] ? "Arrives Day " + dayOf[c.id] : studioOf[c.id] ? "In the Studio · " + esc(studioOf[c.id]) : "Not yet visited"}</span></a>`;
       }).join("")}</div></section>`;
   }
 
@@ -825,6 +874,10 @@ window.TAW = window.TAW || {};
         <fieldset><legend class="lbl">Default session length</legend><div class="seg">${[["quick", "Quick", "10–15"], ["standard", "Standard", "25–35"], ["deep", "Deep", "45–60"]].map(function (m) { return `<label><input type="radio" name="mode" value="${m[0]}" ${p.mode === m[0] ? "checked" : ""}><span>${m[1]}<small>${m[2]} min</small></span></label>`; }).join("")}</div></fieldset>
         <fieldset><legend class="lbl">Appearance</legend><div class="seg">${[["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]].map(function (m) { return `<label><input type="radio" name="theme" value="${m[0]}" ${s.theme === m[0] ? "checked" : ""}><span>${m[1]}</span></label>`; }).join("")}</div></fieldset>
         <fieldset><legend class="lbl">Text size</legend><div class="seg">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(function (m) { return `<label><input type="radio" name="textSize" value="${m[0]}" ${s.textSize === m[0] ? "checked" : ""}><span>${m[1]}</span></label>`; }).join("")}</div></fieldset>
+        <fieldset><legend class="lbl">Your work <span class="muted small">— added to every “Ask Claude” request so advice fits your job</span></legend>
+          <input name="role" value="${esc((p.work || {}).role || "")}" placeholder="Role, e.g. Senior Manager, E-commerce & Automation" aria-label="Role">
+          <input name="industry" value="${esc((p.work || {}).industry || "")}" placeholder="Industry, e.g. retail, consumer goods, fintech" aria-label="Industry">
+          <textarea name="focus" rows="2" placeholder="What you want to get better at, e.g. presenting to the board, talking about AI strategy" aria-label="Professional focus">${esc((p.work || {}).focus || "")}</textarea></fieldset>
         <label class="lbl">Speech recognition & voice<select name="speechLang">${[["en-US", "English (US)"], ["en-GB", "English (UK)"], ["en-AU", "English (Australia)"], ["en-IE", "English (Ireland)"]].map(function (l) { return `<option value="${l[0]}" ${s.speechLang === l[0] ? "selected" : ""}>${l[1]}</option>`; }).join("")}</select></label>
         <button class="btn primary" type="submit">Save</button></form>
       <div class="card"><h3 class="serif">Claude, your mentor ✦</h3>
@@ -840,5 +893,5 @@ window.TAW = window.TAW || {};
     </section>`;
   }
 
-  TAW.views = { home, lesson, journey, culture, card, library, book, film, words, speak, progress, journal, settings, onboarding, analysisHTML, aiHTML, speakBox };
+  TAW.views = { studio, home, lesson, journey, culture, card, library, book, film, words, speak, progress, journal, settings, onboarding, analysisHTML, aiHTML, speakBox };
 })();

@@ -54,13 +54,14 @@
       case "progress": html = V.progress(r.a); break;
       case "journal": html = V.journal(r.a); break;
       case "settings": html = V.settings(); break;
+      case "studio": html = V.studio(); break;
       default: html = V.home();
     }
     stopAllSessions();
     main.innerHTML = html;
     window.scrollTo(0, 0);
     document.querySelectorAll("[data-nav]").forEach(function (a) {
-      const on = a.getAttribute("data-nav") === r.name || (r.name === "lesson" && a.getAttribute("data-nav") === "home") || (["card"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "culture") || (["book", "film"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "library");
+      const on = a.getAttribute("data-nav") === r.name || (r.name === "lesson" && a.getAttribute("data-nav") === (/^[vb]\d/.test(r.a || "") ? "studio" : "home")) || (["card"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "culture") || (["book", "film"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "library");
       a.classList.toggle("on", on);
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
@@ -209,13 +210,13 @@
     S.completeLesson(day, { rating: pendingRating });
     pendingRating = null;
     const refl = S.getAnswer(day, "reflect");
-    if (refl) S.addJournal({ key: "reflect-" + day, kind: L.milestone && TAW.isMilestone(day) ? "milestone" : "reflection", day: day, prompt: L.reflect, text: refl });
+    if (refl) S.addJournal({ key: "reflect-" + day, kind: L.milestone && TAW.isMilestone(day) ? "milestone" : "reflection", day: L.track ? null : day, prompt: L.reflect, text: refl });
     const w = S.state.weekly[day];
     if (w && Object.keys(w.answers).length) {
       S.addJournal({ key: "weekly-" + day, kind: "weekly", day: day, prompt: "Weekly reflection · Week " + Math.round(day / 7),
         text: TAW.weeklyQuestions.map(function (q, i) { return w.answers[i] ? q + "\n" + w.answers[i] : ""; }).filter(Boolean).join("\n\n") });
     }
-    TAW.toast(TAW.milestones[day] ? "★ " + TAW.milestones[day].title : "Day " + day + " complete.");
+    TAW.toast(TAW.milestones[day] ? "★ " + TAW.milestones[day].title : TAW.lessonLabel(L) + " complete.");
     render();
   }
 
@@ -231,9 +232,9 @@
     switch (act) {
       case "tts": speakText(el.getAttribute("data-text")); break;
       case "mode": st.profile.mode = el.getAttribute("data-v"); S.save(); render(); break;
-      case "sec-done": S.markSection(+el.getAttribute("data-day"), el.getAttribute("data-sec")); break;
+      case "sec-done": S.markSection(TAW.dayKey(el.getAttribute("data-day")), el.getAttribute("data-sec")); break;
       case "save-word": {
-        const L = TAW.getLesson(+el.getAttribute("data-day")), v = L.vocab[+el.getAttribute("data-i")];
+        const L = TAW.getLesson(TAW.dayKey(el.getAttribute("data-day"))), v = L.vocab[+el.getAttribute("data-i")];
         S.saveWord({ word: v.word, meaning: v.definition, example: S.getAnswer(L.day, "v_" + v.word) || v.example || "", pron: v.pron || "" });
         el.textContent = "✓ In My Words"; el.classList.add("on"); TAW.toast("Saved — it will come back for review."); break;
       }
@@ -263,7 +264,7 @@
         if (!text) return TAW.toast("Write something first.");
         TAW.ai.askClaude(TAW.ai.prompts.feedback(w.getAttribute("data-prompt") || "Free writing", text, "writing")); break;
       }
-      case "claude-lesson": TAW.ai.askClaude(TAW.ai.prompts.lesson(TAW.getLesson(+el.getAttribute("data-day")))); break;
+      case "claude-lesson": TAW.ai.askClaude(TAW.ai.prompts.lesson(TAW.getLesson(TAW.dayKey(el.getAttribute("data-day"))))); break;
       case "world-claude": TAW.ai.askClaude(TAW.ai.prompts.world()); break;
       case "ladder-claude": {
         const s = (el.closest("form").querySelector("input[name=s]").value || "").trim();
@@ -303,7 +304,7 @@
         break;
       }
       case "rate-lesson": pendingRating = +el.getAttribute("data-v"); el.parentNode.querySelectorAll("button").forEach(function (b) { b.classList.toggle("on", b === el); }); break;
-      case "complete": complete(+el.getAttribute("data-day")); break;
+      case "complete": complete(TAW.dayKey(el.getAttribute("data-day"))); break;
       case "toggle-card": { const id = el.getAttribute("data-id"); if (st.passport[id]) delete st.passport[id]; else { st.passport[id] = { date: S.today() }; S.addReview("concept", TAW.cards[id].name, TAW.cards[id].idea, { card: id }); } S.save(); render(); break; }
       case "book-status": { const id = el.getAttribute("data-id"), v = el.getAttribute("data-v"); st.books[id] = st.books[id] === v ? undefined : v; if (!st.books[id]) delete st.books[id]; S.save(); render(); break; }
       case "film-status": { const id = el.getAttribute("data-id"), v = el.getAttribute("data-v"); st.films[id] = st.films[id] === v ? undefined : v; if (!st.films[id]) delete st.films[id]; S.save(); render(); break; }
@@ -390,6 +391,7 @@
         st.profile.mode = fd.get("mode") || "standard";
         st.profile.interests = fd.getAll("interests");
         st.profile.goals = fd.get("goal") ? [fd.get("goal")] : [];
+        st.profile.work = { role: (fd.get("role") || "").trim(), industry: (fd.get("industry") || "").trim(), focus: "" };
         st.profile.startDate = S.today(); st.profile.onboarded = true;
         if (fd.get("goal")) S.addJournal({ key: "goal", kind: "milestone", day: 1, prompt: "Who do I want to be in six months?", text: fd.get("goal") });
         S.save(); location.hash = "#/lesson/1"; render(); break;
@@ -405,6 +407,7 @@
         TAW.toast("Saved to your Journal."); f.reset(); break;
       case "settings":
         st.profile.name = fd.get("name"); st.profile.startDate = fd.get("startDate") || st.profile.startDate; st.profile.mode = fd.get("mode");
+        st.profile.work = { role: (fd.get("role") || "").trim(), industry: (fd.get("industry") || "").trim(), focus: (fd.get("focus") || "").trim() };
         st.settings.theme = fd.get("theme"); st.settings.textSize = fd.get("textSize"); st.settings.speechLang = fd.get("speechLang");
         S.save(); TAW.toast("Saved."); render(); break;
       case "ai":
