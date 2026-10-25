@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1E1A2E"/>
+  <path d="M0 360 L512 300 L512 330 L0 390 Z" fill="#E8495E" opacity=".85"/>
+  <text x="256" y="300" text-anchor="middle" font-family="Didot, 'Bodoni 72', Georgia, serif" font-style="italic" font-weight="700" font-size="250" fill="#F5D547">13</text>
+  <text x="256" y="440" text-anchor="middle" font-family="Georgia, serif" font-size="54" letter-spacing="10" fill="#F1EAD8">180 DAYS</text>
+  <path d="M396 92 l10 26 l27 2 l-21 17 l7 27 l-23 -15 l-23 15 l7 -27 l-21 -17 l27 -2 z" fill="#F1EAD8"/>
+</svg>
