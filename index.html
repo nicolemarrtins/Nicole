@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Articulate Woman</title>
+<meta name="description" content="A 180-day program to become well read, well spoken and articulate in English.">
+<meta name="theme-color" content="#F7F2EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1714" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Articulate">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="offline" class="offline" hidden>You’re offline — everything except mentor features still works.</div>
+
+<aside class="sidebar" aria-label="Main navigation">
+  <a class="brand" href="#/"><span class="brand-small">The</span> Articulate Woman</a>
+  <nav>
+    <a data-nav="home" href="#/">Today</a>
+    <a data-nav="journey" href="#/journey">Journey</a>
+    <a data-nav="culture" href="#/culture">Culture</a>
+    <a data-nav="library" href="#/library">Library</a>
+    <a data-nav="words" href="#/words">Vocabulary</a>
+    <a data-nav="speak" href="#/speak">Speak</a>
+    <a data-nav="progress" href="#/progress">Progress</a>
+    <a data-nav="journal" href="#/journal">Journal</a>
+    <a data-nav="settings" href="#/settings">Settings</a>
+  </nav>
+  <p class="side-motto">Read widely.<br>Think deeply.<br>Speak clearly.<br>Stay curious.</p>
+</aside>
+
+<main id="main" tabindex="-1"></main>
+
+<nav class="tabbar" aria-label="Main navigation">
+  <a data-nav="home" href="#/"><span aria-hidden="true">◐</span>Today</a>
+  <a data-nav="journey" href="#/journey"><span aria-hidden="true">▦</span>Journey</a>
+  <a data-nav="speak" href="#/speak"><span aria-hidden="true">◉</span>Speak</a>
+  <a data-nav="words" href="#/words"><span aria-hidden="true">Aa</span>Words</a>
+  <button type="button" data-more aria-controls="more-sheet"><span aria-hidden="true">≡</span>More</button>
+</nav>
+<div id="more-sheet" class="more-sheet" hidden>
+  <a data-nav="culture" href="#/culture">Culture</a>
+  <a data-nav="library" href="#/library">Library</a>
+  <a data-nav="progress" href="#/progress">Progress</a>
+  <a data-nav="journal" href="#/journal">Journal</a>
+  <a data-nav="settings" href="#/settings">Settings</a>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="js/data/curriculum.js"></script>
+<script src="js/data/lessons-a.js"></script>
+<script src="js/data/lessons-b.js"></script>
+<script src="js/data/passport.js"></script>
+<script src="js/data/library.js"></script>
+<script src="js/data/extras.js"></script>
+<script src="js/store.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
