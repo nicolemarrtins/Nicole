@@ -1,5 +1,5 @@
 /* Offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "swiftish-v1";
+const VERSION = "swiftish-v2";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/swift.css",
   "js/data/roadmap.js", "js/data/days.js", "js/data/games.js", "js/engine.js", "js/store.js", "js/lessons.js",
