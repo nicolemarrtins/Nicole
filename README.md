@@ -2,6 +2,8 @@
 
 > Read widely. Think deeply. Speak clearly. Stay curious.
 
+> **Also in this repo:** [How to Become Taylor Swift in 180 Days](swift/) — a ridiculously serious (unofficial, parody) creative-writing and English game. See [`swift/README.md`](swift/README.md).
+
 A personal 180-day program for becoming more articulate, better read and more confident in English — built as an installable, offline-first web app.
 
 **Knowledge → Thinking → Language → Expression → Practice.** Every concept ends in something you *do*: write it, say it, recall it, connect it.

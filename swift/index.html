@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Taylor Swift in 180 Days</title>
+<meta name="description" content="A ridiculously serious, unofficial parody transformation simulator: 180 days of songwriting, Easter eggs, cats and eras.">
+<meta name="theme-color" content="#1E1A2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Swift-ish">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Caveat:wght@500;700&family=Manrope:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/swift.css">
+</head>
+<body data-era="1">
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="#/"><span>How to become</span> Taylor Swift<sup>-ish</sup></a>
+  <nav class="topnav" aria-label="Main">
+    <a data-nav="home" href="#/">Today</a>
+    <a data-nav="roadmap" href="#/roadmap">Roadmap</a>
+    <a data-nav="play" href="#/play">Games</a>
+    <a data-nav="lore" href="#/lore">Lore</a>
+    <a data-nav="progress" href="#/progress">Progress</a>
+    <a data-nav="more" href="#/more">More</a>
+  </nav>
+</header>
+<main id="main" tabindex="-1"></main>
+<nav class="tabbar" aria-label="Main">
+  <a data-nav="home" href="#/"><span aria-hidden="true">📓</span>Today</a>
+  <a data-nav="roadmap" href="#/roadmap"><span aria-hidden="true">🗺️</span>Roadmap</a>
+  <a data-nav="play" href="#/play"><span aria-hidden="true">🎲</span>Games</a>
+  <a data-nav="lore" href="#/lore"><span aria-hidden="true">📜</span>Lore</a>
+  <a data-nav="progress" href="#/progress"><span aria-hidden="true">📈</span>Progress</a>
+  <a data-nav="more" href="#/more"><span aria-hidden="true">✦</span>More</a>
+</nav>
+<div id="modal" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/data/roadmap.js"></script>
+<script src="js/data/days.js"></script>
+<script src="js/data/games.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/store.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/views.js"></script>
+<script src="js/day.js"></script>
+<script src="js/play.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
