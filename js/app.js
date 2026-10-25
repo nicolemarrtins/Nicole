@@ -240,6 +240,8 @@
     switch (act) {
       case "tts": speakText(el.getAttribute("data-text")); break;
       case "mode": st.profile.mode = el.getAttribute("data-v"); S.save(); render(); break;
+      case "toggle-es": { st.settings.lessonEs = !st.settings.lessonEs; S.save(); const y = window.scrollY; render(); window.scrollTo(0, y); TAW.toast(st.settings.lessonEs ? "Explicaciones en español activadas" : "English only"); break; }
+      case "claude-es": TAW.ai.askClaude(TAW.ai.prompts.lessonEs(TAW.getLesson(TAW.dayKey(el.getAttribute("data-day"))))); break;
       case "sec-done": S.markSection(TAW.dayKey(el.getAttribute("data-day")), el.getAttribute("data-sec")); break;
       case "save-word": {
         const L = TAW.getLesson(TAW.dayKey(el.getAttribute("data-day"))), v = L.vocab[+el.getAttribute("data-i")];

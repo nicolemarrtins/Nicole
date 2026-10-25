@@ -180,7 +180,8 @@ window.TAW = window.TAW || {};
       if (i >= nodes.length) { stopAudio(); return; }
       const n = nodes[i++]; n.classList.add("reading");
       if (!reduceMotion) n.scrollIntoView({ block: "center", behavior: "smooth" });
-      utter(n.innerText.replace(/🔊/g, ""), function () { if (speaking && !speaking.stopped) speaking.t = setTimeout(next, 250); });
+      const cl = n.cloneNode(true); cl.querySelectorAll(".es, .tts").forEach(function (x) { x.remove(); });
+      utter(cl.textContent.replace(/🔊/g, ""), function () { if (speaking && !speaking.stopped) speaking.t = setTimeout(next, 250); });
     })();
   }
   function shadow(btn) {
@@ -242,7 +243,7 @@ window.TAW = window.TAW || {};
       const bar = document.getElementById("selbar");
       const sel = window.getSelection(), text = sel ? sel.toString().trim().replace(/^[“"‘'(]+|[”"’'),.;:!?]+$/g, "") : "";
       const anchor = sel && sel.anchorNode && (sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentNode : sel.anchorNode);
-      const inMain = anchor && anchor.closest && anchor.closest("#main") && !anchor.closest("textarea, input, .transcript, #selbar");
+      const inMain = anchor && anchor.closest && anchor.closest("#main") && !anchor.closest("textarea, input, .transcript, #selbar, .es");
       if (!text || !inMain || text.length > 60 || text.split(/\s+/).length > 6) { if (!bar.contains(document.activeElement)) bar.hidden = true; return; }
       selCtx = { word: text, sentence: contextSentence(sel) };
       bar.querySelector(".sel-word").textContent = "“" + text + "”";

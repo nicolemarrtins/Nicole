@@ -480,3 +480,11 @@ details[open] > :not(summary) { animation: fadeUp .3s ease both; }
 .cel-sub { color: var(--muted); max-width: 22em; margin: 0 auto; }
 @media (prefers-reduced-motion: reduce) { .cel-circle, .cel-check { stroke-dashoffset: 0; } }
 .daily-word .face.front { justify-content: center; align-items: flex-start; text-align: left; }
+
+/* Spanish explanations */
+.es { display: block; margin-top: .35em; padding-left: .7em; border-left: 2px solid var(--sage); color: var(--muted); font-size: .92em; font-style: normal; line-height: 1.55; }
+.serif .es, .speak-prompt .es, .mentor .es, h3 .es { font-family: var(--sans); font-size: .62em; font-style: normal; }
+.why-box .es, .lede .es { font-size: .9rem; }
+.es-label { font: 600 .7rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sage); margin: -.5em 0 .8em; }
+.es-toggle.on { background: var(--sage); border-color: var(--sage); color: #fff; }
+.es-hint { margin: .4em 0 0; }

@@ -21,6 +21,10 @@ window.TAW = window.TAW || {};
   function header(kicker, title, sub) {
     return `<header class="page-head">${kicker ? `<p class="kicker">${kicker}</p>` : ""}<h1>${title}</h1>${sub ? `<p class="lede">${sub}</p>` : ""}</header>`;
   }
+  /* Spanish support: translation spans shown under the English when the lesson toggle is on */
+  function esFor(L) { return S.state.settings.lessonEs && TAW.es ? (TAW.es[L.day] || null) : null; }
+  function ES(x) { return x ? `<span class="es" lang="es">${x}</span>` : ""; }
+  function at(o, k, i) { return o && o[k] ? (i === undefined ? o[k] : o[k][i]) : ""; }
   function tts(text) { return `<button class="tts" data-act="tts" data-text="${esc(text)}" aria-label="Hear it">🔊</button>`; }
 
   /* ───────────── Speaking widget ───────────── */
@@ -32,10 +36,10 @@ window.TAW = window.TAW || {};
     const myWords = Object.keys(st.words);
     const tryWords = o.tryWords || (myWords.length >= 3 && o.suggestMine !== false ? myWords.sort(function () { return Math.random() - .5; }).slice(0, 3) : []);
     return `<div class="speak card-soft" data-speak="${id}" data-seconds="${o.seconds || 60}" data-tag="${esc(o.tag || "challenge")}" data-day="${o.day || ""}" data-prompt="${esc(o.prompt)}" data-prep="${o.prep || 0}">
-      <p class="speak-prompt">${esc(o.prompt)}</p>
+      <p class="speak-prompt">${esc(o.prompt)}${ES(o.es && o.es[0])}</p>
       <p class="muted small">Aim for ${fmt(o.seconds || 60)}${o.prep ? " · " + o.prep + " seconds to think first" : ""}</p>
       ${o.note ? `<p class="note">${esc(o.note)}</p>` : ""}
-      ${o.structure && o.structure.length ? `<ol class="structure">${o.structure.map(function (s) { return `<li>${esc(s)}</li>`; }).join("")}</ol>` : ""}
+      ${o.structure && o.structure.length ? `<ol class="structure">${o.structure.map(function (s, i) { return `<li>${esc(s)}${ES(o.es && o.es[i + 1])}</li>`; }).join("")}</ol>` : ""}
       ${tryWords.length ? `<p class="small">Try to use: ${tryWords.map(function (w) { return `<span class="chip">${esc(w)}</span>`; }).join(" ")}</p>` : ""}
       ${constraint ? `<p class="constraint">Constraint challenge: this time, no “${esc(constraint)}”. ${TAW.overuseTargets[constraint] ? "Try " + esc(TAW.overuseTargets[constraint].slice(0, 2).join(" or ")) + "." : ""}</p>` : ""}
       <div class="speak-stage">
@@ -65,7 +69,8 @@ window.TAW = window.TAW || {};
   function writeBox(day, key, prompt, opts) {
     opts = opts || {};
     const val = S.getAnswer(day, key);
-    return `<div class="write" data-write="${esc(day + "|" + key)}" data-prompt="${esc(prompt || "")}">
+    const plain = String(prompt || "").replace(/<span class="es"[\s\S]*?<\/span>/g, "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, "\"").replace(/&#39;/g, "'");
+    return `<div class="write" data-write="${esc(day + "|" + key)}" data-prompt="${esc(plain)}">
       ${prompt ? `<p class="q">${prompt}</p>` : ""}
       <textarea data-save="${esc(day + "|" + key)}" rows="${opts.rows || 5}" placeholder="${esc(opts.placeholder || "Write here…")}">${esc(val)}</textarea>
       <div class="row wrap"><span class="small muted wc">${val ? val.trim().split(/\s+/).length + " words" : ""}</span>
@@ -244,9 +249,12 @@ window.TAW = window.TAW || {};
         <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.kicker || "")}</p>
         <h1>${esc(L.title)}</h1>
         <p class="muted small">${esc(L.difficulty || "")} · ${TAW.lessonMinutes(L, mode)} min · ${mode} mode ${st.completed[day] ? "· ✓ completed" : ""}</p>
-        <div class="row wrap lesson-tools"><button class="btn small ghost" data-act="listen" aria-label="Listen to this section">▶ Listen</button><span class="small muted">Tip: select any word to save it · swipe to move between sections</span></div>
+        <div class="row wrap lesson-tools"><button class="btn small ghost" data-act="listen" aria-label="Listen to this section">▶ Listen</button>
+          <button class="pill es-toggle ${st.settings.lessonEs ? "on" : ""}" data-act="toggle-es" aria-pressed="${!!st.settings.lessonEs}" title="Show explanations in Spanish">ES · Español</button><span class="small muted">Tip: select any word to save it · swipe to move between sections</span></div>
         ${ahead ? `<p class="note small">You’re ahead of your current day (${S.currentDay()}). That’s fine — explore freely.</p>` : ""}
         ${L.generated && !L.aiWritten ? `<p class="note small">This lesson is drawn from the curriculum map. <button class="link" data-act="claude-lesson" data-day="${day}">Let Claude teach it to you, step by step ✦</button>${S.state.settings.aiKey ? ` · <button class="link" data-act="ai-lesson" data-day="${day}">Write it into the app (API) ✦</button>` : ""}</p>` : ""}
+        ${st.settings.lessonEs && !TAW.es[day] ? `<p class="note small" lang="es">Esta lección todavía no tiene traducción escrita. <button class="link" data-act="claude-es" data-day="${day}">Pídele a Claude que te la explique en español ✦</button></p>` : ""}
+        ${st.settings.lessonEs && TAW.es[day] ? `<p class="small muted es-hint" lang="es">Explicaciones en español debajo de cada texto. Las palabras, frases y ejemplos que estás aprendiendo siguen en inglés.</p>` : ""}
       </header>
       <nav class="sec-nav" aria-label="Lesson sections">${secs.map(function (s) { return `<a href="#/lesson/${day}/${s[0]}" class="${s[0] === sec ? "on" : ""} ${prog[s[0]] ? "done" : ""}" aria-current="${s[0] === sec ? "step" : "false"}">${prog[s[0]] ? "✓ " : ""}${s[1]}</a>`; }).join("")}</nav>
       <article class="sec card" data-day="${day}" data-sec="${sec}">
@@ -260,24 +268,24 @@ window.TAW = window.TAW || {};
   }
 
   function sectionHTML(L, sec) {
-    const day = L.day;
+    const day = L.day, E = esFor(L);
     switch (sec) {
       case "learn": return `<p class="sec-label">Learn</p>
-        ${L.why ? `<p class="why-box"><b>Why this matters.</b> ${L.why}</p>` : ""}
-        ${(L.learn.body || []).map(function (p) { return `<p>${p}</p>`; }).join("")}
-        ${L.learn.phrases && L.learn.phrases.length ? `<div data-shadow-scope><div class="row wrap between"><h3>Phrases to own</h3>${TAW.enh.shadowButton()}</div><ul class="phrases">${L.learn.phrases.map(function (p) { return `<li><div class="ph-top"><b class="serif">${esc(p.en)}</b>${tts(p.en)}</div><span class="tone">${esc(p.tone)}</span><p class="small">${esc(p.note)}</p></li>`; }).join("")}</ul></div>` : ""}
-        ${L.learn.tip ? `<p class="mentor">“${esc(L.learn.tip)}”</p>` : ""}
+        ${L.why ? `<p class="why-box"><b>Why this matters.</b> ${L.why}${ES(at(E, "w"))}</p>` : ""}
+        ${(L.learn.body || []).map(function (p, i) { return `<p>${p}${ES(at(E, "l", i))}</p>`; }).join("")}
+        ${L.learn.phrases && L.learn.phrases.length ? `<div data-shadow-scope><div class="row wrap between"><h3>Phrases to own</h3>${TAW.enh.shadowButton()}</div><ul class="phrases">${L.learn.phrases.map(function (p, pi) { return `<li><div class="ph-top"><b class="serif">${esc(p.en)}</b>${tts(p.en)}</div><span class="tone">${esc(p.tone)}</span><p class="small">${esc(p.note)}${ES(at(E, "p", pi))}</p></li>`; }).join("")}</ul></div>` : ""}
+        ${L.learn.tip ? `<p class="mentor">“${esc(L.learn.tip)}”${ES(at(E, "t"))}</p>` : ""}
         ${L.milestone && L.type !== "graduation" ? milestoneBlock(L) : ""}`;
       case "vocab": {
         const list = S.state.profile.mode === "quick" ? L.vocab.slice(0, 3) : L.vocab;
         return `<p class="sec-label">Vocabulary</p><p class="muted">Not a list — a set of tools. Read the nuance, then make each word yours.</p>
-        ${list.map(function (v, i) { return vocabCard(v, day, i); }).join("")}`;
+        ${list.map(function (v, i) { return vocabCard(v, day, i, at(E, "v", i)); }).join("")}`;
       }
       case "culture": {
         const c = L.culture && TAW.cards[L.culture];
         return `<p class="sec-label">Culture</p>
-          ${c ? cardFull(c, true) : `<div class="ref"><p class="serif big">${esc(L.cultureRef)}</p></div>`}
-          ${L.cultureNote ? `<p class="why-box">${esc(L.cultureNote)}</p>` : ""}
+          ${c ? cardFull(c, true, E) : `<div class="ref"><p class="serif big">${esc(L.cultureRef)}</p></div>`}
+          ${L.cultureNote ? `<p class="why-box">${esc(L.cultureNote)}${ES(at(E, "c"))}</p>` : ""}
           ${writeBox(day, "culture", c ? "In your own words: what could you say about " + esc(c.name) + " in a conversation?" : "In your own words: why does this reference matter?", { rows: 3 })}`;
       }
       case "sayBetter": {
@@ -285,22 +293,22 @@ window.TAW = window.TAW || {};
         return `<p class="sec-label">Say it better</p><p class="muted">Start basic. Climb one level at a time — and notice what each step adds.</p>
           <div class="ladder" data-ladder data-shadow-scope>
             <div class="rung basic"><span class="kicker">Basic</span><p class="serif big">“${esc(sb.basic)}”</p></div>
-            ${sb.levels.map(function (l, i) { return `<div class="rung" ${i > 0 ? "hidden" : ""}><span class="kicker">${esc(l[0])}</span><p class="serif">“${esc(l[1])}”</p>${l[2] ? `<p class="small muted">${esc(l[2])}</p>` : ""}${tts(l[1])}</div>`; }).join("")}
+            ${sb.levels.map(function (l, i) { return `<div class="rung" ${i > 0 ? "hidden" : ""}><span class="kicker">${esc(l[0])}</span><p class="serif">“${esc(l[1])}”</p>${l[2] ? `<p class="small muted">${esc(l[2])}${ES(at(E, "s", i))}</p>` : ""}${tts(l[1])}</div>`; }).join("")}
             <div class="row wrap"><button class="btn small" data-act="ladder-next">Next level ↓</button>${TAW.enh.shadowButton("◐ Shadow the levels")}</div>
           </div>
-          ${writeBox(day, "sayBetter", sb.prompt || "Now your version:", { rows: 3 })}`;
+          ${writeBox(day, "sayBetter", esc(sb.prompt || "Now your version:") + ES(at(E, "s", 4)), { rows: 3 })}`;
       }
       case "exercise": {
         const ex = L.exercise;
-        return `<p class="sec-label">Practise · ${esc(ex.title)}</p><p>${esc(ex.instructions)}</p>
+        return `<p class="sec-label">Practise · ${esc(ex.title)}</p>${E ? `<p class="es-label" lang="es">${esc(at(E, "e", 0))}</p>` : ""}<p>${esc(ex.instructions)}${ES(at(E, "e", 1))}</p>
           <ol class="exercise">${ex.items.map(function (it, i) { return `<li><p class="q">${esc(it.q)}</p>
             <textarea data-save="${day}|ex${i}" rows="2" placeholder="Your version…">${esc(S.getAnswer(day, "ex" + i))}</textarea>
             <details><summary>Show a model answer</summary><p class="model">${esc(it.a)}</p></details></li>`; }).join("")}</ol>`;
       }
-      case "think": return `<p class="sec-label">Think</p><p class="serif big">${esc(L.think.q)}</p>
-        ${L.think.angles && L.think.angles.length ? `<p class="small muted">Angles to consider:</p><ul class="angles">${L.think.angles.map(function (a) { return `<li>${esc(a)}</li>`; }).join("")}</ul>` : ""}
+      case "think": return `<p class="sec-label">Think</p><p class="serif big">${esc(L.think.q)}${ES(at(E, "k", 0))}</p>
+        ${L.think.angles && L.think.angles.length ? `<p class="small muted">Angles to consider:</p><ul class="angles">${L.think.angles.map(function (a, i) { return `<li>${esc(a)}${ES(at(E, "k", i + 1))}</li>`; }).join("")}</ul>` : ""}
         ${writeBox(day, "think", "", { rows: 4, placeholder: "Notes, a position, a doubt… This is for thinking, not performing.", feedback: false })}`;
-      case "express": return `<p class="sec-label">Write</p>${writeBox(day, "express", esc(L.express.prompt), { rows: 7 })}`;
+      case "express": return `<p class="sec-label">Write</p>${writeBox(day, "express", esc(L.express.prompt) + ES(at(E, "x")), { rows: 7 })}`;
       case "speak": {
         const sp = L.speak;
         let html = `<p class="sec-label">Speak</p>`;
@@ -315,7 +323,7 @@ window.TAW = window.TAW || {};
           html += `<p class="muted">Before the test, one last time — the question from Day 1.</p>` + speakBox({ id: "bm" + day, prompt: sp.prompt.replace("Final benchmark: ", ""), seconds: sp.seconds, tag: "benchmark", day: day, constraint: false, suggestMine: false });
         } else {
           const isBm = sp.benchmark === true;
-          html += speakBox({ id: "d" + day, prompt: sp.prompt, seconds: sp.seconds, tag: isBm ? "benchmark" : "lesson", day: day, structure: sp.structure, tryWords: sp.tryWords, constraint: isBm ? false : undefined, suggestMine: !isBm });
+          html += speakBox({ id: "d" + day, prompt: sp.prompt, seconds: sp.seconds, tag: isBm ? "benchmark" : "lesson", day: day, structure: sp.structure, tryWords: sp.tryWords, constraint: isBm ? false : undefined, suggestMine: !isBm, es: E && E.sp });
           if (isBm) html += `<p class="fine">This is your “before vs after” question. <a href="#/progress/compare">Compare all your answers →</a></p>`;
         }
         if (sp.benchmark && sp.benchmark.prompt) {
@@ -335,20 +343,21 @@ window.TAW = window.TAW || {};
       case "recall": return `<p class="sec-label">Recall</p><p class="muted">Try to answer before you reveal. Retrieval is where memory is built.</p>
         <ol class="recall">${L.recall.map(function (r, i) { return `<li data-recall="${i}"><p class="q">${esc(r.q)}</p><details><summary>Reveal</summary><p class="model">${esc(r.a)}</p>
           <div class="row"><button class="pill" data-act="recall-rate" data-ok="1" data-word="${esc(r.word || "")}">I knew it</button><button class="pill" data-act="recall-rate" data-ok="0" data-word="${esc(r.word || "")}">Not yet</button></div></details></li>`; }).join("")}</ol>`;
-      case "reflect": return `<p class="sec-label">Reflect</p><p class="serif big">${esc(L.reflect)}</p>${writeBox(day, "reflect", "", { rows: 5, feedback: false, placeholder: "This goes into your Journal." })}`;
-      case "deep": return `<p class="sec-label">Go deeper</p><h3>${esc(L.deep.title)}</h3><p>${esc(L.deep.body)}</p>${writeBox(day, "deep", esc(L.deep.prompt), { rows: 7 })}`;
+      case "reflect": return `<p class="sec-label">Reflect</p><p class="serif big">${esc(L.reflect)}${ES(at(E, "r"))}</p>${writeBox(day, "reflect", "", { rows: 5, feedback: false, placeholder: "This goes into your Journal." })}`;
+      case "deep": return `<p class="sec-label">Go deeper</p><h3>${esc(L.deep.title)}${ES(at(E, "d", 0))}</h3><p>${esc(L.deep.body)}${ES(at(E, "d", 1))}</p>${writeBox(day, "deep", esc(L.deep.prompt) + ES(at(E, "d", 2)), { rows: 7 })}`;
     }
     return "";
   }
 
-  function vocabCard(v, day, i) {
+  function vocabCard(v, day, i, ev) {
     const saved = !!S.state.words[v.word];
+    ev = ev || [];
     return `<div class="vocab">
       <div class="v-head"><h3 class="serif">${esc(v.word)}</h3>${v.pron ? `<span class="pron">${esc(v.pron)}</span>` : ""}${tts(v.word)}${v.pos ? `<span class="pos">${esc(v.pos)}</span>` : ""}</div>
-      <p class="def">${esc(v.definition)}</p>
-      ${v.nuance ? `<p><span class="lab">Nuance</span> ${esc(v.nuance)}</p>` : ""}
+      <p class="def">${esc(v.definition)}${ES(ev[0])}</p>
+      ${v.nuance ? `<p><span class="lab">Nuance</span> ${esc(v.nuance)}${ES(ev[1])}</p>` : ""}
       ${v.synonyms && v.synonyms.length ? `<p><span class="lab">Similar</span> ${v.synonyms.map(function (s) { return `<span class="chip">${esc(s)}</span>`; }).join(" ")}</p>` : ""}
-      ${v.distinction ? `<p><span class="lab">The difference</span> ${esc(v.distinction)}</p>` : ""}
+      ${v.distinction ? `<p><span class="lab">The difference</span> ${esc(v.distinction)}${ES(ev[2])}</p>` : ""}
       ${v.example ? `<p class="example">“${esc(v.example)}” ${tts(v.example)}</p>` : ""}
       ${v.conversation ? `<div class="convo"><span class="lab">In conversation</span><p>${nl(v.conversation)}</p></div>` : ""}
       <label class="lbl"><span class="lab">Your turn</span> ${esc(v.prompt || "Write your own sentence.")}
@@ -482,13 +491,14 @@ window.TAW = window.TAW || {};
       }).join("")}</div></section>`;
   }
 
-  function cardFull(c, inLesson) {
+  function cardFull(c, inLesson, E) {
+    const cw = S.state.settings.lessonEs && TAW.esCards ? TAW.esCards[c.id] : null;
     const pc = passCat(c.cat);
     const rel = (c.related || []).map(function (r) { return TAW.cards[r] ? `<a class="chip" href="#/card/${r}">${esc(TAW.cards[r].name)}</a>` : `<span class="chip">${esc(r)}</span>`; }).join(" ");
     return `<div class="pcard">
       <p class="kicker"><span aria-hidden="true">${pc[1]}</span> ${esc(pc[2])} · ${esc(c.period)}${c.origin ? " · " + esc(c.origin) : ""}</p>
       <h2 class="serif">${esc(c.name)}</h2>
-      <p class="lede">${esc(c.why)}</p>
+      <p class="lede">${esc(c.why)}${ES(cw)}</p>
       <h4>Three things to know</h4><ol>${c.facts.map(function (f) { return `<li>${esc(f)}</li>`; }).join("")}</ol>
       <blockquote class="idea">${esc(c.idea)}</blockquote>
       <div data-shadow-scope><div class="row wrap between"><h4>How to talk about it</h4>${TAW.enh.shadowButton()}</div><ul class="talk">${c.talk.map(function (t) { return `<li>“${esc(t)}” ${tts(t)}</li>`; }).join("")}</ul></div>

@@ -143,6 +143,12 @@ window.TAW = window.TAW || {};
       return intro() + "Find one significant news story from the last week, from reputable sources, that would make a rich learning opportunity (economics, technology, culture, science or society). Avoid partisan framing.\n\n" +
         "Give me: what verifiably happened (FACT), how analysts interpret it (INTERPRETATION, attributed), the range of opinions fairly (OPINION), 3–4 key concepts explained simply, 5 useful words, and a speaking prompt. Then ask for my view and give me feedback on how I express it.";
     },
+    lessonEs: function (L) {
+      return intro() + "Por favor, explícame en español (neutro, claro y cálido) la lección del " + TAW.lessonLabel(L) + ": “" + L.title + "”.\n" +
+        "Enfoque: " + (L.why || "") + "\nPalabras: " + (L.vocab || []).map(function (v) { return v.word + (v.definition ? " (" + v.definition + ")" : ""); }).join("; ") +
+        "\nPregunta para pensar: " + (L.think ? L.think.q : "") + "\nTarea oral: " + (L.speak ? L.speak.prompt : "") +
+        "\n\nExplica en español la idea central, el contexto cultural y el significado y los matices de cada palabra, pero deja en inglés las palabras, frases y ejemplos que debo aprender. Luego hazme practicar en inglés, paso a paso, corrigiéndome.";
+    },
     word: function (w, sentence) {
       return intro() + "I came across “" + w + "”" + (sentence ? " in this sentence: “" + sentence + "”" : "") + ".\n\nExplain it for me: meaning (in this context), pronunciation with the stressed syllable, nuance, 2–3 near-synonyms and how they differ, two natural example sentences (one about work), and whether it’s formal, neutral or informal. Then ask me to write my own sentence with it, and correct it.";
     },
