@@ -47,11 +47,11 @@ window.TS = window.TS || {};
     const done = st.daysDone();
     el.innerHTML =
       '<section class="hero">' +
-        '<p class="eyebrow">A ridiculously serious Taylor Swift transformation simulator</p>' +
+        '<p class="eyebrow">A ridiculously serious transformation simulator</p>' +
         '<h1 class="title"><span class="t-small">How to become</span><span class="t-big">Taylor Swift</span><span class="t-days">in <em>180</em> days</span></h1>' +
         egg("home-star", "The star in the corner of the home page", "✦", "hero-star") +
-        '<div class="hero-meta"><div class="tay-ring" style="--p:' + st.overall() + '"><b>' + st.overall() + '%</b><small>Your Taylorification</small></div>' +
-        '<p class="hero-day">' + (done ? "Day " + done + " of 180 complete" : "Day 0 · Status: civilian") + "<br><span>" + era.emoji + " " + esc(era.name) + "</span></p></div>" +
+        '<div class="hero-meta"><div class="tay-ring" style="--p:' + st.overall() + '"><b>' + st.overall() + '%</b><small>Taylorified</small></div>' +
+        '<p class="hero-day"><small>Your Taylorification</small>' + (done ? "Day " + done + " of 180 complete" : "Day 0 · Status: civilian") + "<br>" + era.emoji + " " + esc(era.name) + "</p></div>" +
       "</section>" +
       '<section class="mission ticket">' +
         '<div class="ticket-main"><p class="eyebrow">Today’s mission · Day ' + d + "</p><h2>" + esc(day.title) + "</h2><p>" + esc(day.objective) + "</p>" +
@@ -230,14 +230,16 @@ window.TS = window.TS || {};
     el.innerHTML = '<header class="page-head"><p class="eyebrow">The complete curriculum</p><h1>The 180-Day Roadmap</h1><p>Six training eras. One hundred and eighty days. Zero official endorsements.</p></header>' +
       TS.ERAS.map(function (era) {
         const days = TS.ROADMAP.slice(era.from - 1, era.to);
-        return '<section class="era-block era-' + era.n + '"><header><p class="eyebrow">Era ' + ["I", "II", "III", "IV", "V", "VI"][era.n - 1] + " · Days " + era.from + "–" + era.to + "</p><h2>" + era.emoji + " " + esc(era.name) + '</h2><p class="obj">Objective: ' + esc(era.objective) + '</p><p class="skills">' + era.skills.map(esc).join(" · ") + '</p><p class="mood">' + esc(era.mood) + "</p></header>" +
+        const cur = TS.eraOf(st.currentDay()).n === era.n;
+        return '<details class="era-block era-' + era.n + '"' + (cur ? " open" : "") + '><summary><p class="eyebrow">Era ' + ["I", "II", "III", "IV", "V", "VI"][era.n - 1] + " · Days " + era.from + "–" + era.to + "</p><h2>" + era.emoji + " " + esc(era.name) + "</h2></summary>" +
+          '<div class="era-info"><p class="obj">Objective: ' + esc(era.objective) + '</p><p class="skills">' + era.skills.map(esc).join(" · ") + '</p><p class="mood">' + esc(era.mood) + "</p></div>" +
           (era.n === 6 ? '<p class="small weeks">' + TS.FINAL_WEEKS.map(function (w) { return esc(w.title) + " (" + w.from + "–" + w.to + ")"; }).join(" · ") + "</p>" : "") +
-          '<ol class="day-grid">' + days.map(function (r) {
+          '<ol class="day-list">' + days.map(function (r) {
             const stt = st.status(r.day);
-            const inner = '<span class="dn num">' + r.day + "</span><span class=\"dt\">" + esc(r.title) + "</span>" + (TS.DAYS[r.day] ? '<span class="full">FULL</span>' : "");
-            const special = r.day === 13 ? egg("roadmap-13", "Day 13 on the roadmap, which was always going to be special", "✶", "inline tiny") : "";
-            return '<li class="d ' + stt + (r.day % 13 === 0 ? " thirteen" : "") + '">' + (stt === "locked" ? '<span class="tile-in" title="' + esc(r.objective) + '">' + inner + "</span>" : '<a class="tile-in" href="#/day/' + r.day + '" title="' + esc(r.objective) + '">' + inner + "</a>") + special + "</li>";
-          }).join("") + "</ol></section>";
+            const label = { done: "Done ✓", open: "Today", tomorrow: "Tomorrow", locked: TS.DAYS[r.day] ? "Full" : "" }[stt];
+            const inner = '<span class="dn">' + r.day + "</span><span>" + esc(r.title) + (r.day === 13 ? " " + egg("roadmap-13", "Day 13 on the roadmap, which was always going to be special", "✶", "inline tiny") : "") + '</span><span class="st">' + label + "</span>";
+            return '<li class="' + stt + '">' + (stt === "locked" ? '<span class="day-row">' + inner + "</span>" : '<a class="day-row" href="#/day/' + r.day + '">' + inner + "</a>") + "</li>";
+          }).join("") + "</ol></details>";
       }).join("");
     bindEggs(el);
   }
@@ -305,7 +307,7 @@ window.TS = window.TS || {};
         st.STATS.map(function (x) { return "<li><span>" + x.emoji + " " + x.label + '</span><b class="num">' + Math.round(P(x.k)) + "%</b></li>"; }).join("") +
         '<li><span>🎀 Friendship Bracelet Inventory</span><b class="num">' + s.counts.bracelets + '</b></li><li><span>🍷 Emotional Damage</span><b class="num">' + s.damage + "%</b></li></ul>" +
         '<p class="overall">Overall: <b>' + st.overall() + '% TAYLORIFIED</b></p><p class="small">You are now legally required to make everything slightly more symbolic.</p></section>' +
-      '<section class="bars card"><h2>Skill bars</h2>' + bars.map(function (b) { return '<div class="bar-row"><span>' + b[0] + '</span><code class="tbar" aria-hidden="true">' + U.textBar(b[1]) + '</code><b class="num">' + Math.round(b[1]) + "%</b></div>"; }).join("") + "</section>" +
+      '<section class="bars card"><h2>Skill bars</h2>' + bars.map(function (b) { return '<div class="bar-row"><span>' + b[0] + '</span>' + U.meter(b[1], "skill") + '<b class="num">' + Math.round(b[1]) + "%</b></div>"; }).join("") + "</section>" +
       (snaps.length > 1 ? '<section class="card"><h2>Taylorification over time</h2>' + spark(snaps.map(function (d) { return [d, s.snapshots[d]]; })) + "</section>" : "") +
       '<section class="tree"><h2>The Taylorification Tree</h2><ol><li class="root">YOU</li>' + TS.TREE.map(function (t, i) {
         return '<li class="' + (tree[i] ? "lit" : "") + '"><span class="num">STEP ' + (i + 1) + "</span> " + esc(t.t) + "<small>" + (tree[i] ? "Unlocked" : esc(t.need)) + "</small>" + (i === 5 ? egg("tree-6", "Step 6 of the Taylorification Tree", "13", "inline tiny") : "") + "</li>";
