@@ -252,6 +252,29 @@
       case "rec-stop": stopRec(sess(box)); break;
       case "speak-analyse": analyseSpeak(box); break;
       case "speak-ai": aiSpeak(box, el); break;
+      case "speak-claude": {
+        const text = box.querySelector(".transcript").value.trim();
+        if (!text) return TAW.toast("Speak or type your answer first.");
+        if (!sess(box).attemptId) analyseSpeak(box);
+        TAW.ai.askClaude(TAW.ai.prompts.feedback(box.getAttribute("data-prompt"), text, "speaking")); break;
+      }
+      case "write-claude": {
+        const w = el.closest("[data-write]"), text = w.querySelector("textarea").value.trim();
+        if (!text) return TAW.toast("Write something first.");
+        TAW.ai.askClaude(TAW.ai.prompts.feedback(w.getAttribute("data-prompt") || "Free writing", text, "writing")); break;
+      }
+      case "claude-lesson": TAW.ai.askClaude(TAW.ai.prompts.lesson(TAW.getLesson(+el.getAttribute("data-day")))); break;
+      case "world-claude": TAW.ai.askClaude(TAW.ai.prompts.world()); break;
+      case "ladder-claude": {
+        const s = (el.closest("form").querySelector("input[name=s]").value || "").trim();
+        if (!s) return TAW.toast("Type a sentence first.");
+        TAW.ai.askClaude(TAW.ai.prompts.ladder(s)); break;
+      }
+      case "find-claude": {
+        const idea = (main.querySelector("textarea[name=idea]").value || "").trim();
+        if (!idea) return TAW.toast("Type your idea first.");
+        TAW.ai.askClaude(TAW.ai.prompts.express(idea)); break;
+      }
       case "confidence": {
         const s = sess(box); box.querySelectorAll("[data-act=confidence]").forEach(function (b) { b.classList.toggle("on", b === el); });
         if (!s.attemptId) analyseSpeak(box);

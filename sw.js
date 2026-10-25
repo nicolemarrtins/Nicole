@@ -1,5 +1,5 @@
 /* Offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "taw-v2";
+const VERSION = "taw-v3";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/styles.css",
   "js/data/curriculum.js", "js/data/lessons-a.js", "js/data/lessons-b.js", "js/data/lessons-c.js", "js/data/lessons-d.js", "js/data/passport.js",

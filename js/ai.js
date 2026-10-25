@@ -110,5 +110,44 @@ window.TAW = window.TAW || {};
 
   async function test() { return call("Reply with the single word: ready", { effort: "low", maxTokens: 50 }); }
 
-  TAW.ai = { available, why, call, expressIdea, feedback, generateLesson, worldBriefing, test };
+  /* ── Ask Claude: use the Claude app / claude.ai with your own subscription, no API key ── */
+  const INTRO = "You are my mentor in “The Articulate Woman”, my 180-day program to become more articulate, better read and more confident in English. " +
+    "Be warm, intelligent and direct — like a sophisticated mentor, not a teacher. My goal is clear, natural, nuanced international English: simple + precise + nuanced, never pretentious. Never comment on my accent.\n\n";
+  const prompts = {
+    feedback: function (task, answer, kind) {
+      return INTRO + "Here is my answer to this " + (kind || "speaking") + " task: “" + task + "”\n\n" +
+        (kind === "speaking" ? "(It’s a speech-to-text transcript — ignore punctuation and transcription glitches.)\n\n" : "") +
+        "“" + answer + "”\n\nPlease give me:\n1. Two sentences on what worked and what to work on.\n2. Scores out of 10 for structure, clarity, vocabulary, repetition, fillers, grammar, naturalness, nuance and confidence.\n" +
+        "3. Up to four corrections (what I said → better → why), only real errors or unnatural phrasing.\n4. Up to four basic words I used and more precise alternatives.\n" +
+        "5. A model version of MY answer — same ideas, natural and articulate, not fancier than needed.\n6. One concrete thing to try next time.\nThen ask me one follow-up question so we can keep practising.";
+    },
+    express: function (idea) {
+      return INTRO + "I have an idea but I don’t know how to say it naturally in English (it may be in simple English, Spanish or Portuguese):\n\n“" + idea + "”\n\n" +
+        "Give me: the most natural way to say it; three alternatives (casual, neutral, formal) with when to use each; the key word that makes it work, with pronunciation, why it works and how it differs from near-synonyms; " +
+        "3–4 related expressions; and one pretentious or unnatural version I should avoid. Then ask me to make my own sentence with the key word, and correct it.";
+    },
+    lesson: function (L) {
+      return INTRO + "Teach me today’s lesson — Day " + L.day + ": “" + L.title + "”.\nFocus: " + (L.why || "") +
+        "\nWords: " + (L.vocab || []).map(function (v) { return v.word; }).join(", ") +
+        "\nCultural reference: " + (L.culture && TAW.cards[L.culture] ? TAW.cards[L.culture].name : (L.cultureRef || "")) +
+        "\nThinking question: " + (L.think ? L.think.q : "") + "\nSpeaking task: " + (L.speak ? L.speak.prompt : "") +
+        "\n\nTeach it interactively, one step at a time, waiting for my reply each time: (1) a short explanation with real substance and accurate facts; (2) each word with definition, nuance, how it differs from synonyms, an example and a mini-dialogue — then ask me for my own sentence and correct it; " +
+        "(3) the cultural reference: why it matters and how to talk about it; (4) a “say it better” ladder from basic to articulate; (5) the thinking question; (6) the speaking task — I’ll send my answer and you give me feedback. Start with step 1.";
+    },
+    world: function () {
+      return INTRO + "Find one significant news story from the last week, from reputable sources, that would make a rich learning opportunity (economics, technology, culture, science or society). Avoid partisan framing.\n\n" +
+        "Give me: what verifiably happened (FACT), how analysts interpret it (INTERPRETATION, attributed), the range of opinions fairly (OPINION), 3–4 key concepts explained simply, 5 useful words, and a speaking prompt. Then ask for my view and give me feedback on how I express it.";
+    },
+    ladder: function (s) {
+      return INTRO + "Build a 4-level “Say it better” ladder for this basic sentence: “" + s + "”. Level 1 clearer, Level 2 more precise, Level 3 natural and nuanced, Level 4 articulate but never pretentious. " +
+        "Explain briefly what each level adds. Then ask me to write my own Level 4 version and correct it.";
+    }
+  };
+  function askClaude(prompt) {
+    try { if (navigator.clipboard) navigator.clipboard.writeText(prompt).catch(function () {}); } catch (e) {}
+    window.open("https://claude.ai/new?q=" + encodeURIComponent(prompt), "_blank", "noopener");
+    TAW.toast("Opening Claude — the request is also copied, so you can paste it if it isn’t already there.");
+  }
+
+  TAW.ai = { available, why, call, expressIdea, feedback, generateLesson, worldBriefing, test, prompts, askClaude };
 })();

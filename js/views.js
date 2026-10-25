@@ -52,7 +52,8 @@ window.TAW = window.TAW || {};
       <audio class="playback" controls hidden></audio>
       <div class="row wrap">
         <button class="btn" data-act="speak-analyse">Analyse my answer</button>
-        <button class="btn ghost" data-act="speak-ai" ${TAW.ai.available() ? "" : "title=\"" + esc(TAW.ai.why()) + "\""}>Mentor feedback ✦</button>
+        <button class="btn ghost" data-act="speak-claude">Ask Claude ✦</button>
+        ${S.state.settings.aiKey ? `<button class="btn ghost" data-act="speak-ai">Mentor feedback (API) ✦</button>` : ""}
       </div>
       <div class="confidence" hidden><span class="small">How confident did you feel?</span>
         ${[1, 2, 3, 4, 5].map(function (n) { return `<button class="pill" data-act="confidence" data-v="${n}" aria-label="Confidence ${n} of 5">${n}</button>`; }).join("")}</div>
@@ -67,7 +68,7 @@ window.TAW = window.TAW || {};
       ${prompt ? `<p class="q">${prompt}</p>` : ""}
       <textarea data-save="${esc(day + "|" + key)}" rows="${opts.rows || 5}" placeholder="${esc(opts.placeholder || "Write here…")}">${esc(val)}</textarea>
       <div class="row wrap"><span class="small muted wc">${val ? val.trim().split(/\s+/).length + " words" : ""}</span>
-      ${opts.feedback === false ? "" : `<button class="btn small" data-act="write-analyse">Feedback</button><button class="btn small ghost" data-act="write-ai">Mentor ✦</button>`}</div>
+      ${opts.feedback === false ? "" : `<button class="btn small" data-act="write-analyse">Feedback</button><button class="btn small ghost" data-act="write-claude">Ask Claude ✦</button>${S.state.settings.aiKey ? `<button class="btn small ghost" data-act="write-ai">Mentor (API) ✦</button>` : ""}`}</div>
       <div class="write-result"></div></div>`;
   }
 
@@ -234,7 +235,7 @@ window.TAW = window.TAW || {};
         <h1>${esc(L.title)}</h1>
         <p class="muted small">${esc(L.difficulty || "")} · ${TAW.lessonMinutes(L, mode)} min · ${mode} mode ${st.completed[day] ? "· ✓ completed" : ""}</p>
         ${ahead ? `<p class="note small">You’re ahead of your current day (${S.currentDay()}). That’s fine — explore freely.</p>` : ""}
-        ${L.generated && !L.aiWritten ? `<p class="note small">This lesson is drawn from the curriculum map. <button class="link" data-act="ai-lesson" data-day="${day}">Expand it into a fully written lesson with your mentor ✦</button></p>` : ""}
+        ${L.generated && !L.aiWritten ? `<p class="note small">This lesson is drawn from the curriculum map. <button class="link" data-act="claude-lesson" data-day="${day}">Let Claude teach it to you, step by step ✦</button>${S.state.settings.aiKey ? ` · <button class="link" data-act="ai-lesson" data-day="${day}">Write it into the app (API) ✦</button>` : ""}</p>` : ""}
       </header>
       <nav class="sec-nav" aria-label="Lesson sections">${secs.map(function (s) { return `<a href="#/lesson/${day}/${s[0]}" class="${s[0] === sec ? "on" : ""} ${prog[s[0]] ? "done" : ""}" aria-current="${s[0] === sec ? "step" : "false"}">${prog[s[0]] ? "✓ " : ""}${s[1]}</a>`; }).join("")}</nav>
       <article class="sec card" data-day="${day}" data-sec="${sec}">
@@ -534,7 +535,7 @@ window.TAW = window.TAW || {};
     return `<section>${header("Library", "What’s happening in the world", "Not a news feed — a way of learning from the news. Always separate fact, interpretation and opinion.")}${t}
       <div class="card-soft"><p class="kicker">Today’s briefing ✦</p>
         ${brief ? worldCase(brief, true) : `<p class="muted small">With an API key and a connection, your mentor finds one recent story from reputable sources and turns it into a lesson.</p>`}
-        <button class="btn small" data-act="world-brief">${brief ? "Find another story" : "Prepare today’s briefing"}</button>
+        <div class="row wrap"><button class="btn small" data-act="world-claude">Ask Claude for today’s briefing ✦</button>${S.state.settings.aiKey ? `<button class="btn small ghost" data-act="world-brief">${brief ? "Find another story" : "Prepare it in the app"} (API)</button>` : ""}</div>
         <p class="fine">${esc(TAW.ai.why())}</p></div>
       <h2 class="serif">Practise on your own headline</h2>
       <form class="card form" data-form="headline">
@@ -626,7 +627,7 @@ window.TAW = window.TAW || {};
         <div class="row"><button class="btn ghost" data-act="better-next">Another sentence →</button></div></div>
       <h2 class="serif">Make your own ladder</h2>
       <form class="card form" data-form="own-ladder"><label class="lbl">Type a basic sentence you often say<input name="s" placeholder="e.g. It was very good."></label>
-        <button class="btn" type="submit">Climb it with my mentor ✦</button><div class="own-result"></div></form>
+        <div class="row wrap"><button class="btn" type="button" data-act="ladder-claude">Climb it with Claude ✦</button>${S.state.settings.aiKey ? `<button class="btn ghost" type="submit">In the app (API)</button>` : ""}</div><div class="own-result"></div></form>
     </section>`;
   }
 
@@ -666,8 +667,9 @@ window.TAW = window.TAW || {};
     return `<section>${header("Your language engine", "I have an idea but I don’t know how to say it", "Type it in simple English, Spanish or Portuguese. We’ll find the natural English — and explain why it works.")}${t}
       <form class="card form" data-form="find"><textarea name="idea" rows="3" placeholder="Quiero decir que una persona puede tener éxito pero no necesariamente sentirse realizada."></textarea>
         <button class="btn primary" type="submit">Find the words</button></form>
+      <div class="row wrap"><button class="btn ghost" data-act="find-claude">Ask Claude instead ✦</button></div>
       <div class="find-result"></div>
-      <p class="fine">With an API key, your mentor translates and explains. Offline, you get the phrase frames that fit what you’re trying to say.</p></section>`;
+      <p class="fine">“Find the words” shows phrase frames that fit your idea, offline. “Ask Claude” opens Claude with your idea ready to send, using your Claude account.</p></section>`;
   }
 
   function cards(t, which) {
@@ -825,8 +827,9 @@ window.TAW = window.TAW || {};
         <fieldset><legend class="lbl">Text size</legend><div class="seg">${[["s", "Small"], ["m", "Medium"], ["l", "Large"]].map(function (m) { return `<label><input type="radio" name="textSize" value="${m[0]}" ${s.textSize === m[0] ? "checked" : ""}><span>${m[1]}</span></label>`; }).join("")}</div></fieldset>
         <label class="lbl">Speech recognition & voice<select name="speechLang">${[["en-US", "English (US)"], ["en-GB", "English (UK)"], ["en-AU", "English (Australia)"], ["en-IE", "English (Ireland)"]].map(function (l) { return `<option value="${l[0]}" ${s.speechLang === l[0] ? "selected" : ""}>${l[1]}</option>`; }).join("")}</select></label>
         <button class="btn primary" type="submit">Save</button></form>
-      <div class="card"><h3 class="serif">Mentor (optional) ✦</h3>
-        <p class="small">The app works completely without this. With an Anthropic API key, you unlock: mentor feedback on speaking and writing, “Find the words” translation, full lessons for Days 15–179, and a weekly current-affairs briefing. Your key is stored only in this browser and sent only to Anthropic.</p>
+      <div class="card"><h3 class="serif">Claude, your mentor ✦</h3>
+        <p class="small"><b>Easiest: no key needed.</b> Every “Ask Claude ✦” button in the app writes the mentor request for you, copies it, and opens Claude — use it with your normal Claude account.</p>
+        <p class="small"><b>Optional: an API key</b> shows the feedback inside the app instead, and can write full lessons into the app for offline use. Billed separately by Anthropic. Your key is stored only on this device and sent only to Anthropic.</p>
         <form class="form" data-form="ai"><label class="lbl">API key<input name="aiKey" type="password" autocomplete="off" value="${esc(s.aiKey)}" placeholder="sk-ant-…"></label>
           <label class="lbl">Model<select name="aiModel">${[["claude-opus-5-5", "Claude Opus 5.5 (recommended)"], ["claude-sonnet-5-5", "Claude Sonnet 5.5 (faster, cheaper)"], ["claude-haiku-5-5", "Claude Haiku 5.5 (fastest)"]].map(function (m) { return `<option value="${m[0]}" ${s.aiModel === m[0] ? "selected" : ""}>${m[1]}</option>`; }).join("")}</select></label>
           <div class="row"><button class="btn" type="submit">Save key</button><button class="btn ghost" type="button" data-act="ai-test">Test</button><span class="ai-status small"></span></div></form></div>
