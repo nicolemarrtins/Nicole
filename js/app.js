@@ -58,6 +58,7 @@
       default: html = V.home();
     }
     stopAllSessions();
+    if (r.name === "session") html = TAW.enh.sessionView();
     main.innerHTML = html;
     window.scrollTo(0, 0);
     document.querySelectorAll("[data-nav]").forEach(function (a) {
@@ -68,7 +69,10 @@
     document.getElementById("more-sheet").hidden = true;
     const h = main.querySelector("h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
     document.getElementById("offline").hidden = navigator.onLine;
+    TAW.enh.afterRender(r);
   }
+  TAW.render = render;
+  TAW.speakText = speakText;
   window.addEventListener("hashchange", render);
   window.addEventListener("online", function () { document.getElementById("offline").hidden = true; });
   window.addEventListener("offline", function () { document.getElementById("offline").hidden = false; });
@@ -216,8 +220,12 @@
       S.addJournal({ key: "weekly-" + day, kind: "weekly", day: day, prompt: "Weekly reflection · Week " + Math.round(day / 7),
         text: TAW.weeklyQuestions.map(function (q, i) { return w.answers[i] ? q + "\n" + w.answers[i] : ""; }).filter(Boolean).join("\n\n") });
     }
-    TAW.toast(TAW.milestones[day] ? "★ " + TAW.milestones[day].title : TAW.lessonLabel(L) + " complete.");
     render();
+    const bits = [];
+    if (L.vocab && L.vocab.length) bits.push(L.vocab.length + " words added to your review");
+    if (L.culture && TAW.cards[L.culture]) bits.push(TAW.cards[L.culture].name + " joins your Passport");
+    if (TAW.milestones[day]) bits.unshift("★ " + TAW.milestones[day].title);
+    TAW.enh.celebrate(L, bits.join(" · "));
   }
 
   /* ── Clicks ── */
@@ -348,10 +356,6 @@
         const out = main.querySelector(".ai-status"); out.textContent = "Testing…";
         try { await TAW.ai.test(); out.textContent = "✓ Connected"; } catch (err) { out.textContent = err.message; }
         break;
-      }
-      case "export": {
-        const blob = new Blob([S.exportData()], { type: "application/json" });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "articulate-woman-backup-" + S.today() + ".json"; a.click(); break;
       }
       case "reset": if (confirm("Erase all progress, words, recordings and journal entries on this device? Export a backup first if you might want them.")) { S.reset(); TAW.invalidateLesson(); location.hash = "#/"; render(); } break;
     }

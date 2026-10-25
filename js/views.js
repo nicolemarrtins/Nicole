@@ -55,6 +55,7 @@ window.TAW = window.TAW || {};
         <button class="btn ghost" data-act="speak-claude">Ask Claude ✦</button>
         ${S.state.settings.aiKey ? `<button class="btn ghost" data-act="speak-ai">Mentor feedback (API) ✦</button>` : ""}
       </div>
+      ${TAW.enh.pasteBlock("")}
       <div class="confidence" hidden><span class="small">How confident did you feel?</span>
         ${[1, 2, 3, 4, 5].map(function (n) { return `<button class="pill" data-act="confidence" data-v="${n}" aria-label="Confidence ${n} of 5">${n}</button>`; }).join("")}</div>
       <div class="speak-result"></div>
@@ -69,6 +70,7 @@ window.TAW = window.TAW || {};
       <textarea data-save="${esc(day + "|" + key)}" rows="${opts.rows || 5}" placeholder="${esc(opts.placeholder || "Write here…")}">${esc(val)}</textarea>
       <div class="row wrap"><span class="small muted wc">${val ? val.trim().split(/\s+/).length + " words" : ""}</span>
       ${opts.feedback === false ? "" : `<button class="btn small" data-act="write-analyse">Feedback</button><button class="btn small ghost" data-act="write-claude">Ask Claude ✦</button>${S.state.settings.aiKey ? `<button class="btn small ghost" data-act="write-ai">Mentor (API) ✦</button>` : ""}`}</div>
+      ${opts.feedback === false ? "" : TAW.enh.pasteBlock(S.getAnswer(day, key + "__claude"))}
       <div class="write-result"></div></div>`;
   }
 
@@ -155,6 +157,9 @@ window.TAW = window.TAW || {};
         <div class="dayline"><span class="day-num">Day ${day} <span class="muted">/ 180</span></span><span class="muted">${pct}% complete${streak > 1 ? " · " + streak + " days in a row" : ""}</span></div>
         <div class="progress-line" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Program progress"><i style="width:${pct}%"></i></div>
       </header>
+      ${TAW.enh.backupBanner()}
+      ${TAW.enh.sessionHero()}
+      ${TAW.enh.continueCard()}
       ${away >= 2 ? `<div class="welcome-back"><p class="serif">Welcome back. Let’s continue.</p><p class="small muted">No catching up required — you pick up exactly where you left off.</p></div>` : ""}
       <article class="today card">
         <p class="kicker">Today · Month ${L.month} — ${esc(month.title)}</p>
@@ -172,6 +177,7 @@ window.TAW = window.TAW || {};
           <a class="act" href="#/words/review"><b>Review</b><span>${due} due</span></a>
         </div>
       </article>
+      ${TAW.enh.dailyCards()}
       <section class="block">
         <h3 class="section-title">Your progress</h3>
         ${Object.keys(strands).map(function (k) { return bar(k, strands[k], 100); }).join("")}
@@ -238,6 +244,7 @@ window.TAW = window.TAW || {};
         <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.kicker || "")}</p>
         <h1>${esc(L.title)}</h1>
         <p class="muted small">${esc(L.difficulty || "")} · ${TAW.lessonMinutes(L, mode)} min · ${mode} mode ${st.completed[day] ? "· ✓ completed" : ""}</p>
+        <div class="row wrap lesson-tools"><button class="btn small ghost" data-act="listen" aria-label="Listen to this section">▶ Listen</button><span class="small muted">Tip: select any word to save it · swipe to move between sections</span></div>
         ${ahead ? `<p class="note small">You’re ahead of your current day (${S.currentDay()}). That’s fine — explore freely.</p>` : ""}
         ${L.generated && !L.aiWritten ? `<p class="note small">This lesson is drawn from the curriculum map. <button class="link" data-act="claude-lesson" data-day="${day}">Let Claude teach it to you, step by step ✦</button>${S.state.settings.aiKey ? ` · <button class="link" data-act="ai-lesson" data-day="${day}">Write it into the app (API) ✦</button>` : ""}</p>` : ""}
       </header>
@@ -258,7 +265,7 @@ window.TAW = window.TAW || {};
       case "learn": return `<p class="sec-label">Learn</p>
         ${L.why ? `<p class="why-box"><b>Why this matters.</b> ${L.why}</p>` : ""}
         ${(L.learn.body || []).map(function (p) { return `<p>${p}</p>`; }).join("")}
-        ${L.learn.phrases && L.learn.phrases.length ? `<h3>Phrases to own</h3><ul class="phrases">${L.learn.phrases.map(function (p) { return `<li><div class="ph-top"><b class="serif">${esc(p.en)}</b>${tts(p.en)}</div><span class="tone">${esc(p.tone)}</span><p class="small">${esc(p.note)}</p></li>`; }).join("")}</ul>` : ""}
+        ${L.learn.phrases && L.learn.phrases.length ? `<div data-shadow-scope><div class="row wrap between"><h3>Phrases to own</h3>${TAW.enh.shadowButton()}</div><ul class="phrases">${L.learn.phrases.map(function (p) { return `<li><div class="ph-top"><b class="serif">${esc(p.en)}</b>${tts(p.en)}</div><span class="tone">${esc(p.tone)}</span><p class="small">${esc(p.note)}</p></li>`; }).join("")}</ul></div>` : ""}
         ${L.learn.tip ? `<p class="mentor">“${esc(L.learn.tip)}”</p>` : ""}
         ${L.milestone && L.type !== "graduation" ? milestoneBlock(L) : ""}`;
       case "vocab": {
@@ -276,10 +283,10 @@ window.TAW = window.TAW || {};
       case "sayBetter": {
         const sb = L.sayBetter;
         return `<p class="sec-label">Say it better</p><p class="muted">Start basic. Climb one level at a time — and notice what each step adds.</p>
-          <div class="ladder" data-ladder>
+          <div class="ladder" data-ladder data-shadow-scope>
             <div class="rung basic"><span class="kicker">Basic</span><p class="serif big">“${esc(sb.basic)}”</p></div>
             ${sb.levels.map(function (l, i) { return `<div class="rung" ${i > 0 ? "hidden" : ""}><span class="kicker">${esc(l[0])}</span><p class="serif">“${esc(l[1])}”</p>${l[2] ? `<p class="small muted">${esc(l[2])}</p>` : ""}${tts(l[1])}</div>`; }).join("")}
-            <button class="btn small" data-act="ladder-next">Next level ↓</button>
+            <div class="row wrap"><button class="btn small" data-act="ladder-next">Next level ↓</button>${TAW.enh.shadowButton("◐ Shadow the levels")}</div>
           </div>
           ${writeBox(day, "sayBetter", sb.prompt || "Now your version:", { rows: 3 })}`;
       }
@@ -384,6 +391,7 @@ window.TAW = window.TAW || {};
         <button class="btn primary big" data-act="complete" data-day="${L.day}">Mark ${esc(TAW.lessonLabel(L))} complete</button>`}
         ${done && !L.track ? `<div class="row center"><a class="btn primary" href="#/">Back to Today</a><a class="btn" href="#/lesson/${L.day + 1 <= 180 ? L.day + 1 : 180}">Preview Day ${Math.min(180, L.day + 1)}</a></div>` : ""}
         ${done && L.track ? `<div class="row center"><a class="btn primary" href="#/studio">Back to Studio</a>${TAW.nextTrackKey(L) ? `<a class="btn" href="#/lesson/${TAW.nextTrackKey(L)}">Next: ${esc(TAW.getLesson(TAW.nextTrackKey(L)).title)}</a>` : ""}</div>` : ""}
+        ${done ? `<div class="row center">${TAW.enh.sessionLink()}</div>` : ""}
         <p class="mentor">“${esc(TAW.mentorLines[(L.n || L.day) % TAW.mentorLines.length])}”</p>
       </div>
     </section>`;
@@ -483,7 +491,7 @@ window.TAW = window.TAW || {};
       <p class="lede">${esc(c.why)}</p>
       <h4>Three things to know</h4><ol>${c.facts.map(function (f) { return `<li>${esc(f)}</li>`; }).join("")}</ol>
       <blockquote class="idea">${esc(c.idea)}</blockquote>
-      <h4>How to talk about it</h4><ul class="talk">${c.talk.map(function (t) { return `<li>“${esc(t)}” ${tts(t)}</li>`; }).join("")}</ul>
+      <div data-shadow-scope><div class="row wrap between"><h4>How to talk about it</h4>${TAW.enh.shadowButton()}</div><ul class="talk">${c.talk.map(function (t) { return `<li>“${esc(t)}” ${tts(t)}</li>`; }).join("")}</ul></div>
       ${rel ? `<h4>Connects to</h4><p>${rel}</p>` : ""}
     </div>`;
   }
@@ -638,7 +646,7 @@ window.TAW = window.TAW || {};
     all.forEach(function (i) { counts[S.statusOf(i)]++; });
     const it = due[0];
     let body;
-    if (!it) body = `<div class="card center"><p class="serif big">Nothing due. Your memory is up to date.</p><p class="muted">Items return on day 1, 3, 7, 14, 30 and 60 — each time asking a little more of you.</p></div>`;
+    if (!it) body = `<div class="card center"><p class="serif big">Nothing due. Your memory is up to date.</p><p class="muted">Items return on day 1, 3, 7, 14, 30 and 60 — each time asking a little more of you.</p><div class="row center">${TAW.enh.sessionLink()}</div></div>`;
     else {
       const task = S.taskFor(it);
       const ask = {
@@ -654,8 +662,12 @@ window.TAW = window.TAW || {};
         <h2 class="serif">${esc(it.front)}</h2>${it.extra && it.extra.pron ? `<p class="pron">${esc(it.extra.pron)}</p>` : ""}
         <p>${esc(ask)}</p>
         ${task === "Use" || task === "Explain" || task === "Connect" ? `<textarea rows="3" class="rv-input" placeholder="Your answer…"></textarea>` : ""}
-        <details><summary>Reveal</summary><p class="model">${esc(it.back)}</p>${it.extra && it.extra.example ? `<p class="example">“${esc(it.extra.example)}”</p>` : ""}${it.extra && it.extra.card ? `<a href="#/card/${it.extra.card}">Open passport card →</a>` : ""}</details>
-        <div class="grade">${[["again", "Again"], ["hard", "Hard"], ["good", "Got it"], ["easy", "Easy"]].map(function (g) { return `<button class="btn ${g[0] === "good" ? "primary" : ""}" data-act="grade" data-g="${g[0]}" data-id="${esc(it.id)}">${g[1]}</button>`; }).join("")}</div>
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="kicker">Think first</span><p class="serif">Answer in your head — or out loud — before you turn the card.</p></div>
+          <div class="face back"><p class="model">${esc(it.back)}</p>${it.extra && it.extra.example ? `<p class="example">“${esc(it.extra.example)}”</p>` : ""}${it.extra && it.extra.card ? `<a href="#/card/${it.extra.card}">Open passport card →</a>` : ""}</div>
+        </div></div>
+        <button class="btn primary" data-act="flip">Turn the card</button>
+        <div class="grade" hidden>${[["again", "Again"], ["hard", "Hard"], ["good", "Got it"], ["easy", "Easy"]].map(function (g) { return `<button class="btn ${g[0] === "good" ? "primary" : ""}" data-act="grade" data-g="${g[0]}" data-id="${esc(it.id)}">${g[1]}</button>`; }).join("")}</div>
       </div>`;
     }
     return `<section>${header("Active recall", "Review", "Retrieve, don’t reread. A few minutes a day keeps everything you’ve learned alive.")}${t}
@@ -687,6 +699,7 @@ window.TAW = window.TAW || {};
     if (sub === "cards") return cards(t, arg);
     if (sub === "history") return history(t);
     if (sub === "run") return runChallenge(t, arg);
+    if (sub === "shadow") return TAW.enh.shadowView(t);
     const groups = [30, 60, 90, 120, 180];
     return `<section>${header("Practice", "Speaking challenges", "Knowledge becomes yours when you say it out loud. Record, listen back, and look at the patterns — not for perfection, for progress.")}${t}
       <div class="tool-grid">
@@ -694,6 +707,7 @@ window.TAW = window.TAW || {};
         <a class="tool" href="#/speak/run/random"><b>Surprise me</b><span>A random prompt</span></a>
         <a class="tool" href="#/speak/run/mywords"><b>My Words challenge</b><span>Use 3 saved words</span></a>
         <a class="tool" href="#/speak/run/constraint"><b>Constraint drill</b><span>Without your crutch word</span></a>
+        <a class="tool" href="#/speak/shadow"><b>Shadowing</b><span>Listen, then repeat — 8 new sentences daily</span></a>
       </div>
       ${groups.map(function (g) { const items = TAW.speakingChallenges.map(function (c, i) { return [c, i]; }).filter(function (x) { return x[0].s === g; });
         return `<h2 class="serif">${g < 60 ? g + " seconds" : g / 60 + (g === 60 ? " minute" : " minutes")}</h2><ul class="prompt-list">${items.map(function (x) { return `<li><a href="#/speak/run/${x[1]}">${esc(x[0].p)}</a></li>`; }).join("")}</ul>`; }).join("")}
@@ -736,7 +750,7 @@ window.TAW = window.TAW || {};
       ${list.length ? list.slice(0, 80).map(function (a) { return `<details class="card attempt"><summary><span class="kicker">${esc(a.date)} · ${esc(a.tag)}${a.day ? " · Day " + a.day : ""}</span><b>${esc(a.prompt)}</b>
         <span class="small muted">${a.analysis ? a.analysis.words + " words" + (a.analysis.wpm ? " · " + a.analysis.wpm + " wpm" : "") + " · " + a.analysis.fillerTotal + " fillers" : ""}${a.confidence ? " · confidence " + a.confidence + "/5" : ""}</span></summary>
         ${a.hasAudio ? `<button class="btn small" data-act="play" data-id="${a.id}">▶ Play recording</button><audio data-audio="${a.id}" controls hidden></audio>` : ""}
-        <p class="transcript-view">${esc(a.transcript || "")}</p>${a.analysis ? analysisHTML(a.analysis) : ""}${a.ai ? aiHTML(a.ai) : ""}
+        <p class="transcript-view">${esc(a.transcript || "")}</p>${a.analysis ? analysisHTML(a.analysis) : ""}${a.ai ? aiHTML(a.ai) : ""}${a.claude ? `<div class="ai-fb"><p class="kicker">Claude’s feedback ✦</p><p class="transcript-view">${esc(a.claude)}</p></div>` : ""}
         <button class="link small" data-act="del-attempt" data-id="${a.id}">Delete</button></details>`; }).join("") : `<p class="muted">Your recordings will appear here.</p>`}</section>`;
   }
 
@@ -886,12 +900,12 @@ window.TAW = window.TAW || {};
         <form class="form" data-form="ai"><label class="lbl">API key<input name="aiKey" type="password" autocomplete="off" value="${esc(s.aiKey)}" placeholder="sk-ant-…"></label>
           <label class="lbl">Model<select name="aiModel">${[["claude-opus-5-5", "Claude Opus 5.5 (recommended)"], ["claude-sonnet-5-5", "Claude Sonnet 5.5 (faster, cheaper)"], ["claude-haiku-5-5", "Claude Haiku 5.5 (fastest)"]].map(function (m) { return `<option value="${m[0]}" ${s.aiModel === m[0] ? "selected" : ""}>${m[1]}</option>`; }).join("")}</select></label>
           <div class="row"><button class="btn" type="submit">Save key</button><button class="btn ghost" type="button" data-act="ai-test">Test</button><span class="ai-status small"></span></div></form></div>
-      <div class="card"><h3 class="serif">Your data</h3><p class="small">Everything lives on this device. Export a backup regularly, especially before clearing your browser.</p>
-        <div class="row wrap"><button class="btn" data-act="export">Export backup</button><label class="btn ghost">Import backup<input type="file" accept="application/json" data-act="import" hidden></label><button class="btn ghost danger" data-act="reset">Start over</button></div></div>
+      <div class="card"><h3 class="serif">Your data</h3><p class="small">Everything lives only on this device. “Back up” opens the iPhone share sheet — choose “Save to Files” (iCloud Drive) or send it to yourself. To restore on a new phone, use “Restore backup” and pick that file. ${st.lastBackup ? "<b>Last backup: " + esc(st.lastBackup) + ".</b>" : "<b>No backup yet.</b>"}</p>
+        <div class="row wrap"><button class="btn primary" data-act="backup">Back up now</button><label class="btn ghost">Restore backup<input type="file" accept="application/json,.json,text/plain" data-act="import" hidden></label><button class="btn ghost danger" data-act="reset">Start over</button></div></div>
       <div class="card"><h3 class="serif">Add to your iPhone Home Screen</h3><p class="small">In Safari, tap the Share button, then “Add to Home Screen”. The app then opens full-screen and works offline.</p></div>
       <div class="philosophy small-phil"><p>Read widely.</p><p>Think deeply.</p><p>Speak clearly.</p><p>Stay curious.</p></div>
     </section>`;
   }
 
-  TAW.views = { studio, home, lesson, journey, culture, card, library, book, film, words, speak, progress, journal, settings, onboarding, analysisHTML, aiHTML, speakBox };
+  TAW.views = { pageHeader: header, studio, home, lesson, journey, culture, card, library, book, film, words, speak, progress, journal, settings, onboarding, analysisHTML, aiHTML, speakBox };
 })();

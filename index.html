@@ -58,6 +58,19 @@
   <a data-nav="settings" href="#/settings">Settings</a>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="selbar" class="selbar" hidden role="dialog" aria-label="Save selected word">
+  <div class="sel-top"><b class="sel-word serif"></b><button class="link small" data-act="sel-close" aria-label="Close">✕</button></div>
+  <input placeholder="Meaning (optional)" aria-label="Meaning">
+  <div class="row wrap"><button class="btn small" data-act="sel-hear">🔊 Hear</button><button class="btn small primary" data-act="sel-save">+ Save to My Words</button><button class="btn small ghost" data-act="sel-claude">Ask Claude ✦</button></div>
+</div>
+<div id="shadowbar" class="shadowbar" hidden aria-live="polite">
+  <div class="row between"><span class="sb-state">Listen…</span><span class="sb-count small"></span><button class="link small" data-act="stop-audio">Stop</button></div>
+  <div class="sb-track"><i class="sb-fill"></i></div>
+</div>
+<div id="celebrate" class="celebrate" hidden aria-live="polite">
+  <div class="cel-card"><svg viewBox="0 0 120 120" class="cel-svg" aria-hidden="true"><circle cx="60" cy="60" r="52" class="cel-circle"/><path d="M38 62 L53 77 L84 45" class="cel-check"/></svg>
+  <p class="cel-title serif"></p><p class="cel-sub small"></p></div>
+</div>
 
 <script src="js/data/curriculum.js"></script>
 <script src="js/data/lessons-a.js"></script>
@@ -75,6 +88,7 @@
 <script src="js/analysis.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/lessons.js"></script>
+<script src="js/enhance.js"></script>
 <script src="js/views.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -143,6 +143,9 @@ window.TAW = window.TAW || {};
       return intro() + "Find one significant news story from the last week, from reputable sources, that would make a rich learning opportunity (economics, technology, culture, science or society). Avoid partisan framing.\n\n" +
         "Give me: what verifiably happened (FACT), how analysts interpret it (INTERPRETATION, attributed), the range of opinions fairly (OPINION), 3–4 key concepts explained simply, 5 useful words, and a speaking prompt. Then ask for my view and give me feedback on how I express it.";
     },
+    word: function (w, sentence) {
+      return intro() + "I came across “" + w + "”" + (sentence ? " in this sentence: “" + sentence + "”" : "") + ".\n\nExplain it for me: meaning (in this context), pronunciation with the stressed syllable, nuance, 2–3 near-synonyms and how they differ, two natural example sentences (one about work), and whether it’s formal, neutral or informal. Then ask me to write my own sentence with it, and correct it.";
+    },
     ladder: function (s) {
       return intro() + "Build a 4-level “Say it better” ladder for this basic sentence: “" + s + "”. Level 1 clearer, Level 2 more precise, Level 3 natural and nuanced, Level 4 articulate but never pretentious. " +
         "Explain briefly what each level adds. Then ask me to write my own Level 4 version and correct it.";

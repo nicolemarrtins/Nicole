@@ -1,10 +1,10 @@
 /* Offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "taw-v4";
+const VERSION = "taw-v5";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/styles.css",
   "js/data/curriculum.js", "js/data/lessons-a.js", "js/data/lessons-b.js", "js/data/lessons-c.js", "js/data/lessons-d.js", "js/data/passport.js",
   "js/data/library.js", "js/data/extras.js", "js/data/track-brain.js", "js/data/track-voice-a.js", "js/data/track-voice-b.js", "js/data/extras-pro.js", "js/store.js", "js/analysis.js", "js/ai.js",
-  "js/lessons.js", "js/views.js", "js/app.js", "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"
+  "js/lessons.js", "js/enhance.js", "js/views.js", "js/app.js", "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"
 ];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
