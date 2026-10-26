@@ -1,5 +1,5 @@
-/* Offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "swiftish-v2";
+/* Offline cache for the app shell: network first, cache when offline. Bump VERSION when the file list changes. */
+const VERSION = "swiftish-v3";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/swift.css",
   "js/data/roadmap.js", "js/data/days.js", "js/data/games.js", "js/engine.js", "js/store.js", "js/lessons.js",
@@ -27,10 +27,13 @@ self.addEventListener("fetch", function (e) {
     return;
   }
   if (url.origin !== location.origin || url.pathname.indexOf(new URL(self.registration.scope).pathname) !== 0) return;
+  // App files: network first so every open gets the latest version; the cache is the offline fallback.
   e.respondWith(caches.open(VERSION).then(function (c) {
-    return c.match(req, { ignoreSearch: true }).then(function (hit) {
-      const net = fetch(req).then(function (res) { if (res.ok) c.put(req, res.clone()); return res; }).catch(function () { return hit || c.match("index.html"); });
-      return hit || net;
+    return fetch(req, { cache: "no-cache" }).then(function (res) {
+      if (res.ok) c.put(req, res.clone());
+      return res;
+    }).catch(function () {
+      return c.match(req, { ignoreSearch: true }).then(function (hit) { return hit || c.match("index.html"); });
     });
   }));
 });
