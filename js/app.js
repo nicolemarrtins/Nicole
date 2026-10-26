@@ -38,6 +38,7 @@
   function render() {
     applyPrefs();
     S.touchVisit();
+    if (S.state.profile.onboarded) TAW.enh.getSession(); /* pin today’s plan before anything is completed */
     const r = route();
     let html;
     if (!S.state.profile.onboarded && r.name !== "settings") html = V.onboarding();
@@ -59,7 +60,8 @@
       default: html = V.home();
     }
     stopAllSessions();
-    if (r.name === "session") html = TAW.enh.sessionView();
+    if (r.name === "session") html = V.home();
+    document.body.classList.toggle("in-player", r.name === "lesson" && !!S.state.profile.onboarded);
     main.innerHTML = html;
     window.scrollTo(0, 0);
     document.querySelectorAll("[data-nav]").forEach(function (a) {
@@ -72,6 +74,7 @@
     document.getElementById("offline").hidden = navigator.onLine;
     TAW.enh.afterRender(r);
     TAW.lab.afterRender(r);
+    TAW.player.afterRender(r);
   }
   TAW.render = render;
   TAW.speakText = speakText;

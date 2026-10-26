@@ -53,64 +53,7 @@ window.TAW = window.TAW || {};
     }
     return st.session;
   }
-  function sessionSteps() {
-    const ss = getSession(), st = S.state, due = S.dueItems().length;
-    const L = TAW.getLesson(ss.day);
-    const resume = st.lastLesson && st.lastLesson.key === ss.day && !st.completed[ss.day] ? st.lastLesson.sec : "";
-    const steps = [];
-    if (ss.reviewsAtStart > 0) steps.push({ key: "review", label: "Review", title: due ? due + " item" + (due > 1 ? "s" : "") + " to recall" : "Memory refreshed", sub: "Retrieve before you learn — about " + Math.max(2, Math.ceil(ss.reviewsAtStart / 3)) + " min", href: "#/words/review", done: due === 0 });
-    steps.push({ key: "lesson", label: TAW.lessonLabel(L), title: L.title, sub: TAW.lessonMinutes(L, st.profile.mode) + " min · " + st.profile.mode + " mode", href: "#/lesson/" + ss.day + (resume ? "/" + resume : ""), done: !!st.completed[ss.day], resume: !!resume });
-    if (ss.studio) { const T = TAW.getLesson(ss.studio); steps.push({ key: "studio", label: T.label, title: T.title, sub: "Studio · about 25 min · optional today", href: "#/lesson/" + ss.studio, done: !!st.completed[ss.studio], optional: true }); }
-    return steps;
-  }
-  function ring(done, total, size) {
-    size = size || 64;
-    const r = size / 2 - 5, c = 2 * Math.PI * r, frac = total ? done / total : 0;
-    return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${done} of ${total} steps done">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="ring-bg"/>
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="ring-fg" style="stroke-dasharray:${c};--off:${c * (1 - frac)};--full:${c}"/>
-      <text x="50%" y="54%" text-anchor="middle" class="ring-t">${done}/${total}</text></svg>`;
-  }
-  function sessionHero() {
-    const steps = sessionSteps(), req = steps.filter(function (s) { return !s.optional; });
-    const done = req.filter(function (s) { return s.done; }).length, all = done === req.length;
-    const next = steps.find(function (s) { return !s.done; });
-    return `<a class="session-hero ${all ? "complete" : ""}" href="#/session">
-      ${ring(done, req.length)}
-      <span class="sh-text"><span class="kicker">${all ? "Today’s session · complete" : done ? "Continue today’s session" : "Today’s session"}</span>
-      <b>${all ? (next ? "Optional: " + esc(next.title) : "Well done — see you tomorrow") : esc(next.title)}</b>
-      <span class="small muted">${all ? "Consistency over perfection." : esc(next.label) + (next.resume ? " · continue where you left off" : "")}</span></span>
-      <span class="sh-go" aria-hidden="true">→</span></a>`;
-  }
-  function sessionView() {
-    const steps = sessionSteps(), req = steps.filter(function (s) { return !s.optional; });
-    const done = req.filter(function (s) { return s.done; }).length;
-    const L = TAW.getLesson(getSession().day);
-    return `<section><a class="back" href="#/">← Today</a>
-      <header class="page-head session-head">${ring(done, req.length, 92)}<div><p class="kicker">${esc(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }))}</p><h1>Today’s session</h1>
-      <p class="lede">${done === req.length ? "Done for today. Anything more is a bonus." : "One step at a time. Retrieve, learn, speak."}</p></div></header>
-      <ol class="steps">${steps.map(function (s, i) {
-        const isNext = !s.done && steps.slice(0, i).every(function (x) { return x.done || x.optional; });
-        return `<li class="step ${s.done ? "done" : ""} ${isNext ? "next" : ""}"><a href="${s.href}">
-          <span class="step-n">${s.done ? "✓" : i + 1}</span>
-          <span class="step-body"><span class="kicker">${esc(s.label)}${s.optional ? " · optional" : ""}</span><b>${esc(s.title)}</b><span class="small muted">${esc(s.sub)}</span></span>
-          <span class="step-go">${s.done ? "Revisit" : s.resume ? "Continue" : isNext ? "Start" : "Open"} →</span></a></li>`;
-      }).join("")}</ol>
-      ${L.why ? `<p class="why-box"><b>Why today matters.</b> ${esc(L.why.replace(/<[^>]+>/g, ""))}</p>` : ""}
-    </section>`;
-  }
-  function continueCard() {
-    const st = S.state, ll = st.lastLesson;
-    if (!ll || st.completed[ll.key] || ll.key === getSession().day) return "";
-    const L = TAW.getLesson(ll.key);
-    return `<a class="sug-item continue" href="#/lesson/${ll.key}/${ll.sec}"><span class="kicker">Continue where you left off</span><b>${esc(L.title)}</b><span class="small muted">${esc(TAW.lessonLabel(L))}</span></a>`;
-  }
-  function sessionLink() {
-    const st = S.state;
-    if (!st.session || st.session.date !== today()) return "";
-    const next = sessionSteps().find(function (s) { return !s.done; });
-    return next ? `<a class="btn" href="#/session">Next in today’s session: ${esc(next.label)} →</a>` : `<a class="btn" href="#/session">Today’s session ✓</a>`;
-  }
+  function sessionLink() { return TAW.views.pathNextLink(); }
 
   /* ───────── Daily content ───────── */
   function dayIndex() { const d = new Date(); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000) + d.getFullYear() * 400; }
@@ -120,12 +63,12 @@ window.TAW = window.TAW || {};
     Object.keys(TAW.trackLessons || {}).forEach(function (k) { (TAW.trackLessons[k].vocab || []).forEach(function (v) { if (v.nuance) pool.push(v); }); });
     return pool;
   }
-  function dailyCards() {
+  function dailyCards(bare) {
     const pool = wordPool(), i = dayIndex();
     const v = pool[(i * 7) % pool.length];
     const ids = Object.keys(TAW.cards), c = TAW.cards[ids[(i * 13) % ids.length]];
     const saved = v && S.state.words[v.word];
-    return `<section class="block daily"><h3 class="section-title">Today’s word & idea</h3><div class="daily-grid">
+    return `<section class="block daily">${bare ? "" : `<h3 class="section-title">Today’s word & idea</h3>`}<div class="daily-grid">
       ${v ? `<div class="flip daily-word" data-flip><div class="flip-inner">
         <div class="face front"><span class="kicker">Word of the day</span><b class="serif">${esc(v.word)}</b><span class="pron">${esc(v.pron || "")}</span><span class="small muted">Do you know it? Tap to check.</span></div>
         <div class="face back"><span class="kicker">${esc(v.pos || "")}</span><p class="def">${esc(v.definition)}</p><p class="small">${esc(v.nuance)}</p><p class="example">“${esc(v.example)}”</p></div>
@@ -172,7 +115,7 @@ window.TAW = window.TAW || {};
     });
     if (!nodes.length) return TAW.toast("Nothing to read in this section.");
     speaking = { btn: btn, label: btn.innerHTML, stopped: false };
-    btn.innerHTML = "■ Stop";
+    btn.innerHTML = btn.classList.contains("p-icon") ? "■" : "■ Stop";
     let i = 0;
     (function next() {
       if (!speaking || speaking.stopped) return;
@@ -357,5 +300,5 @@ window.TAW = window.TAW || {};
     if (e.target.getAttribute("data-act") === "tts-rate") { S.state.settings.ttsRate = +e.target.value; S.save(); }
   });
 
-  TAW.enh = { backup, backupBanner, sessionHero, sessionView, sessionLink, continueCard, dailyCards, pasteBlock, shadowButton, shadowView, celebrate, afterRender, stopAudio, getSession };
+  TAW.enh = { backup, backupBanner, sessionLink, dailyCards, pasteBlock, shadowButton, shadowView, celebrate, afterRender, stopAudio, getSession };
 })();

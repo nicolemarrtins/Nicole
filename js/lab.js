@@ -357,7 +357,8 @@
       ${extra}
       <div class="lv-bar"><div class="row between small"><span>Level ${lv.n} · ${lv.name}</span><span class="muted">${lv.next ? lv.toGo + " XP to " + lv.next : "Top level"}</span></div><div class="progress-line"><i style="width:${lv.pct}%"></i></div></div>
       ${missed.length ? `<h4>Coming back soon</h4><ul class="keep">${missed.map(function (it) { return `<li><b>${esc(it.d.opts[0])}</b> <span class="muted small" lang="es">— «${esc(ctxSplit(it.d.ctx).main)}»</span></li>`; }).join("")}</ul>` : ""}
-      <div class="row wrap"><button class="btn primary" data-lab="again">Another round</button><a class="btn ghost" href="#/play">Back to the Lab</a></div>
+      ${run.kind === "workout" ? `<div class="row wrap">${TAW.views.pathNextLink()}</div>` : ""}
+      <div class="row wrap"><button class="btn ${run.kind === "workout" ? "" : "primary"}" data-lab="again">Another round</button><a class="btn ghost" href="#/play">Back to the Lab</a></div>
     </div>`;
   }
 
@@ -410,13 +411,5 @@
     paintHeadSafe();
   }
   function paintHeadSafe() { if (run && run.items) paintHead(); }
-  function homeCard() {
-    const l = lab(), lv = level(l.xp), done = !!l.workouts[S.today()];
-    return `<a class="lab-home card" href="${done ? "#/play" : "#/play/workout"}">
-      <div class="ring small" style="--p:${lv.pct}"><span>${lv.n}</span></div>
-      <div class="lh-text"><p class="kicker">Practice Lab · ${lv.name}</p><b>${done ? "Workout done today ✓" : "Today’s 5-minute workout"}</b><span class="small muted">${done ? "Try a real conversation in the simulator" : "Traps · tone · decode · a real conversation"}</span></div>
-      <span class="lh-arrow" aria-hidden="true">→</span>
-    </a>`;
-  }
-  Object.assign(TAW.lab, { view: view, afterRender: afterRender, homeCard: homeCard, level: level });
+  Object.assign(TAW.lab, { view: view, afterRender: afterRender, level: level });
 })();

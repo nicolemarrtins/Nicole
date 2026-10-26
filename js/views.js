@@ -143,127 +143,192 @@ window.TAW = window.TAW || {};
   }
 
   /* ───────────── Home ───────────── */
-  function home() {
-    const st = S.state, day = S.currentDay(), L = TAW.getLesson(day), month = TAW.months[L.month - 1];
-    const done = S.completedCount(), pct = Math.round(done / 180 * 100);
-    const mode = st.profile.mode, mins = TAW.lessonMinutes(L, mode);
-    const away = S.daysAway();
+  /* ───────────── Today: one clear plan ───────────── */
+  /* the first lesson step not yet done (null when every step is done) */
+  function resumeSec(L, secs) {
+    const prog = S.state.progress[L.day] || {};
+    const first = secs.find(function (s) { return !prog[s[0]]; });
+    return first ? first[0] : null;
+  }
+  /* where “Start / Continue” should take you in a lesson */
+  function lessonEntry(L) {
+    const st = S.state, day = L.day, secs = TAW.lessonSections(L, st.profile.mode), prog = st.progress[day] || {};
+    const doneN = secs.filter(function (s) { return prog[s[0]]; }).length, resume = resumeSec(L, secs);
+    const sec = secs.find(function (s) { return s[0] === resume; });
+    if (st.completed[day]) return { href: "#/lesson/" + day + "/finish", label: "Completed", doneN: secs.length, total: secs.length, done: true };
+    if (!doneN) return { href: "#/lesson/" + day, label: "Start", doneN: 0, total: secs.length };
+    return { href: "#/lesson/" + day + "/" + (resume || "finish"), label: "Continue", step: sec ? sec[1] : "Finish", doneN: doneN, total: secs.length };
+  }
+  function todayPath() {
+    const st = S.state, ss = TAW.enh.getSession(), L = TAW.getLesson(ss.day), mode = st.profile.mode;
+    const en = lessonEntry(L);
+    const lab = st.lab || {}, worked = !!(lab.workouts && lab.workouts[S.today()]);
     const due = S.dueItems().length;
-    const strands = S.strands();
-    const name = st.profile.name;
-    const streak = S.streak();
-    const sug = suggestions();
+    return [
+      { key: "lesson", label: "Lesson · " + TAW.lessonLabel(L), title: L.title, href: en.href, done: !!en.done,
+        sub: en.done ? "Completed ✓" : en.doneN ? "Step " + (en.doneN + 1) + " of " + en.total + " · " + en.step : en.total + " steps · about " + TAW.lessonMinutes(L, mode) + " min",
+        cta: en.done ? "See it" : en.label },
+      { key: "workout", label: "Practice Lab · 5 min", title: "Today’s workout", href: "#/play/workout", done: worked,
+        sub: worked ? "Done today ✓" : "Traps, tone, decode and a real conversation", cta: worked ? "Again" : "Start" },
+      { key: "review", label: "Memory · 2–5 min", title: due ? due + (due === 1 ? " word" : " words") + " to review" : "Review", href: "#/words/review", done: due === 0,
+        sub: due ? "Recalling is how words become yours" : ss.reviewsAtStart ? "All caught up ✓" : "Nothing due — your words appear here after each lesson", cta: due ? "Review" : "Open" }
+    ];
+  }
+  function pathNextLink() {
+    const next = todayPath().find(function (p) { return !p.done; });
+    return next ? `<a class="btn" href="${next.href}">Next on today’s path: ${esc(next.title)} →</a>` : `<a class="btn" href="#/">Today’s path complete ✓</a>`;
+  }
+  function weekLine(day) {
+    const st = S.state, wk = Math.ceil(day / 7), from = (wk - 1) * 7 + 1, days = [];
+    for (let d = from; d < from + 7 && d <= 180; d++) days.push(d);
+    const doneN = days.filter(function (d) { return st.completed[d]; }).length;
+    return `<section class="block week-block"><h3 class="section-title">This week · Week ${wk} <a class="st-link" href="#/journey">Full journey →</a></h3>
+      <div class="week-line">${days.map(function (d) {
+        const Ld = TAW.getLesson(d), done = !!st.completed[d], isToday = d === day, rev = TAW.isReview(d), mile = TAW.isMilestone(d);
+        const cls = [done ? "done" : "", isToday ? "today" : "", rev ? "rev" : "", mile ? "mile" : ""].join(" ");
+        return `<a class="wk ${cls}" href="#/lesson/${d}" aria-label="Day ${d}: ${esc(Ld.title)}${done ? ", completed" : ""}${isToday ? ", today" : ""}">
+          <span class="dot">${done ? "✓" : mile ? "★" : rev ? "↻" : d}</span><span class="wk-l">${isToday ? "Today" : "Day " + d}</span></a>`;
+      }).join("")}</div>
+      <p class="small muted wk-cap">${doneN} of ${days.length} done · ${esc(TAW.months[TAW.monthOf(day) - 1].title)}</p></section>`;
+  }
+  function home() {
+    const st = S.state, first = (st.profile.name || "").trim().split(/\s+/)[0];
+    const ss = TAW.enh.getSession(), day = ss.day, L = TAW.getLesson(day), mode = st.profile.mode;
+    const secs = TAW.lessonSections(L, mode), prog = st.progress[day] || {}, en = lessonEntry(L);
+    const path = todayPath(), next = path.find(function (p) { return !p.done; });
+    const streak = S.streak(), hr = new Date().getHours();
+    const greet = hr < 12 ? "Good morning" : hr < 19 ? "Good afternoon" : "Good evening";
+    const month = TAW.months[L.month - 1];
+    const why = (L.why || "").replace(/<[^>]+>/g, "");
+    const why1 = (why.match(/^[^.!?]+[.!?]/) || [why])[0];
+    const studioKey = thisWeekTrack("voice") || thisWeekTrack("brain");
     const line = TAW.mentorLines[new Date().getDate() % TAW.mentorLines.length];
-    const firstSec = TAW.lessonSections(L, mode)[0];
-    return `<section class="home">
-      <header class="masthead">
-        <p class="kicker">${name ? "Good to see you, " + esc(name) : "Welcome"}</p>
-        <h1 class="wordmark">The Articulate Woman</h1>
-        <div class="dayline"><span class="day-num">Day ${day} <span class="muted">/ 180</span></span><span class="muted">${pct}% complete${streak > 1 ? " · " + streak + " days in a row" : ""}</span></div>
-        <div class="progress-line" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Program progress"><i style="width:${pct}%"></i></div>
+    const tiles = [
+      ["#/studio", "Studio", studioKey ? "This week: " + TAW.getLesson(studioKey).title : "Senior Voice & Learning Brain"],
+      ["#/culture", "Cultural Passport", Object.keys(st.passport).length + " of " + Object.keys(TAW.cards).length + " cards collected"],
+      ["#/library", "Library", "Books and films worth talking about"],
+      ["#/progress", "Your progress", S.completedCount() + " lessons · " + Object.keys(st.words).length + " saved words"],
+      ["#/words/better", "Say it better", "From basic to articulate"],
+      ["#/speak/find", "Find the words", "I have an idea, but…"]
+    ];
+    return `<section class="home2">
+      <header class="hello">
+        <p class="kicker">${greet}${first ? ", " + esc(first) : ""}</p>
+        <div class="hello-row"><span class="hello-day">Day ${day} <span class="muted">of 180</span></span>${streak > 0 ? `<span class="hello-streak">🔥 ${streak} ${streak === 1 ? "day" : "days in a row"}</span>` : ""}</div>
       </header>
       ${TAW.enh.backupBanner()}
-      ${TAW.enh.sessionHero()}
-      ${TAW.enh.continueCard()}
-      ${away >= 2 ? `<div class="welcome-back"><p class="serif">Welcome back. Let’s continue.</p><p class="small muted">No catching up required — you pick up exactly where you left off.</p></div>` : ""}
-      <article class="today card">
-        <p class="kicker">Today · Month ${L.month} — ${esc(month.title)}</p>
-        <h2 class="today-title">${esc(L.title)}</h2>
-        <p class="muted">${esc(L.kicker || "")} · ${esc(L.difficulty || "")}</p>
-        <p class="why">${L.why ? esc(L.why.replace(/<[^>]+>/g, "")) : ""}</p>
-        <div class="mode-row" role="group" aria-label="Session length">
-          ${[["quick", "Quick"], ["standard", "Standard"], ["deep", "Deep"]].map(function (m) { return `<button class="pill ${mode === m[0] ? "on" : ""}" data-act="mode" data-v="${m[0]}" aria-pressed="${mode === m[0]}">${m[1]} · ${TAW.lessonMinutes(L, m[0])} min</button>`; }).join("")}
-        </div>
-        <p class="small muted">Estimated time: ${mins} min</p>
-        <div class="actions4">
-          <a class="act" href="#/lesson/${day}/${firstSec ? firstSec[0] : "learn"}"><b>Learn</b><span>Start today</span></a>
-          <a class="act" href="#/lesson/${day}/${L.think ? "think" : "learn"}"><b>Think</b><span>The question</span></a>
-          <a class="act" href="#/lesson/${day}/${L.speak ? "speak" : "learn"}"><b>Speak</b><span>${L.speak ? fmt(L.speak.seconds || 60) : "—"}</span></a>
-          <a class="act" href="#/words/review"><b>Review</b><span>${due} due</span></a>
-        </div>
+      <article class="hero-lesson ${en.done ? "is-done" : ""}">
+        <p class="kicker">${L.track ? "" : "Month " + L.month + " · " + esc(month.title)}</p>
+        <h1 class="hero-title">${esc(L.title)}</h1>
+        ${why1 ? `<p class="hero-why">${esc(why1)}</p>` : ""}
+        <div class="hero-bar" aria-hidden="true">${secs.map(function (s) { return `<i class="${prog[s[0]] || en.done ? "done" : ""}"></i>`; }).join("")}</div>
+        <p class="hero-meta">${en.done ? "Completed ✓ — well done." : en.doneN ? "Step " + (en.doneN + 1) + " of " + en.total + " · " + esc(en.step) : en.total + " steps · about " + TAW.lessonMinutes(L, mode) + " min"}</p>
+        <a class="hero-cta" href="${en.href}">${en.done ? "See what you learned" : en.doneN ? "▶ Continue lesson" : "▶ Start today’s lesson"}</a>
+        ${en.done && day < 180 ? `<a class="hero-sub" href="#/lesson/${day + 1}">Keep going: Day ${day + 1} →</a>` : ""}
       </article>
-      ${TAW.lab.homeCard()}
-      ${TAW.enh.dailyCards()}
       <section class="block">
-        <h3 class="section-title">Your progress</h3>
-        ${Object.keys(strands).map(function (k) { return bar(k, strands[k], 100); }).join("")}
-        <p class="fine">Indicators of practice, not precise measurements. <a href="#/progress">See your full profile →</a></p>
+        <h3 class="section-title">Today’s path</h3>
+        <ol class="path-list">${path.map(function (p, i) {
+          const isNext = next && p.key === next.key;
+          return `<li class="${p.done ? "done" : ""} ${isNext ? "next" : ""}"><a href="${p.href}">
+            <span class="pn">${p.done ? "✓" : i + 1}</span>
+            <span class="pb"><span class="kicker">${esc(p.label)}${isNext ? " · up next" : ""}</span><b>${esc(p.title)}</b><span class="ps">${esc(p.sub)}</span></span>
+            <span class="pgo">${esc(p.cta)} →</span></a></li>`;
+        }).join("")}</ol>
+        ${next ? "" : `<p class="path-done">Today’s path is complete ✓ Anything more is a bonus — see you tomorrow.</p>`}
       </section>
-      ${studioBlock()}
-      ${sug.length ? `<section class="block"><h3 class="section-title">Suggested for you</h3><div class="sug">${sug.join("")}</div></section>` : ""}
-      <section class="block tools">
-        <h3 class="section-title">Tools</h3>
-        <div class="tool-grid">
-          <a class="tool" href="#/words/better"><b>Say it better</b><span>From basic to articulate</span></a>
-          <a class="tool" href="#/speak/find"><b>Find the words</b><span>I have an idea but…</span></a>
-          <a class="tool" href="#/speak/cards"><b>Conversation cards</b><span>Before you go out</span></a>
-          <a class="tool" href="#/culture/map"><b>Intellectual map</b><span>How ideas connect</span></a>
-        </div>
-      </section>
-      <section class="philosophy">
-        <p>Read widely.</p><p>Think deeply.</p><p>Speak clearly.</p><p>Stay curious.</p>
-        <p class="phil-small">The goal isn’t to sound intelligent. The goal is to become someone who thinks clearly enough that intelligence comes through naturally.</p>
+      ${weekLine(day)}
+      <section class="block explore">
+        <h3 class="section-title">Explore</h3>
+        ${TAW.enh.dailyCards(true)}
+        <div class="tool-grid explore-grid">${tiles.map(function (t) { return `<a class="tool" href="${t[0]}"><b>${esc(t[1])}</b><span>${esc(t[2])}</span></a>`; }).join("")}</div>
       </section>
       <p class="mentor-line">“${esc(line)}”</p>
     </section>`;
   }
 
-  function suggestions() {
-    const st = S.state, out = [];
-    const top = Object.entries(st.overuse).sort(function (a, b) { return b[1] - a[1]; })[0];
-    if (top && top[1] >= 3) out.push(`<a class="sug-item" href="#/speak/run/constraint"><span class="kicker">Constraint drill</span><b>Speak for 60 seconds without “${esc(top[0])}”</b><span class="small muted">You’ve used it ${top[1]} times recently.</span></a>`);
-    const counts = {};
-    TAW.passportCategories.forEach(function (c) { counts[c[0]] = 0; });
-    Object.keys(st.passport).forEach(function (id) { const c = TAW.cards[id]; if (c) counts[c.cat]++; });
-    const pool = (st.profile.interests && st.profile.interests.length ? TAW.passportCategories.filter(function (c) { return true; }) : TAW.passportCategories);
-    const weakest = pool.map(function (c) { return c[0]; }).filter(function (k) { return Object.values(TAW.cards).some(function (x) { return x.cat === k && !st.passport[x.id]; }); })
-      .sort(function (a, b) { return counts[a] - counts[b]; })[0];
-    if (weakest) {
-      const card = Object.values(TAW.cards).find(function (x) { return x.cat === weakest && !st.passport[x.id]; });
-      out.push(`<a class="sug-item" href="#/card/${card.id}"><span class="kicker">Widen your map · ${esc(passCat(weakest)[2])}</span><b>${esc(card.name)}</b><span class="small muted">${esc(card.why)}</span></a>`);
-    }
-    const ratings = Object.entries(st.interest).map(function (e) { return [e[0], e[1].reduce(function (a, b) { return a + b; }, 0) / e[1].length]; }).sort(function (a, b) { return b[1] - a[1]; });
-    if (ratings.length) {
-      const fav = ratings[0][0];
-      const book = TAW.books.find(function (b) { return !st.books[b.id] && b.themes.concat([b.tier]).join(" ").indexOf(fav.slice(0, 5)) >= 0; }) || TAW.books.find(function (b) { return !st.books[b.id] && b.tier === "essential"; });
-      if (book) out.push(`<a class="sug-item" href="#/book/${book.id}"><span class="kicker">Because you enjoy ${esc(catLabel(fav))}</span><b>${esc(book.title)}</b><span class="small muted">${esc(book.author)} · ${book.hours}h</span></a>`);
-    }
-    if (Object.keys(st.words).length >= 4) out.push(`<a class="sug-item" href="#/speak/run/mywords"><span class="kicker">My Words challenge</span><b>Use three of your saved words in one answer</b><span class="small muted">Words become yours when you use them.</span></a>`);
-    return out.slice(0, 3);
-  }
-
-  /* ───────────── Lesson ───────────── */
+  /* ───────────── Lesson player: cover → one step at a time → completion ───────────── */
+  const STEP_HINT = {
+    learn: function () { return "The idea, in a few short reads"; },
+    vocab: function (L) { const n = S.state.profile.mode === "quick" ? Math.min(3, L.vocab.length) : L.vocab.length; return n + " words, one at a time"; },
+    culture: function (L) { const c = L.culture && TAW.cards[L.culture]; return c ? c.name : "Today’s cultural reference"; },
+    sayBetter: function () { return "From basic to articulate, level by level"; },
+    exercise: function (L) { return L.exercise ? L.exercise.title : "Practise"; },
+    think: function () { return "One question to think about"; },
+    express: function () { return "A short piece of writing"; },
+    speak: function (L) { return L.speak && L.speak.seconds ? "Speak for " + fmt(L.speak.seconds) + " — recorded and analysed" : "Speak"; },
+    graduation: function () { return "Seven parts — your final portrait"; },
+    science: function () { return "Why this works in your brain"; },
+    weekly: function () { return "Your week in review"; },
+    recall: function (L) { return (L.recall || []).length + " questions from earlier days"; },
+    reflect: function () { return "One minute — it goes to your Journal"; },
+    deep: function (L) { return L.deep ? L.deep.title : "Optional reading"; }
+  };
+  function lessonExit(L) { return L.track ? "#/studio" : "#/"; }
   function lesson(day, sec) {
     day = TAW.dayKey(day);
-    const L = TAW.getLesson(day), st = S.state, mode = st.profile.mode;
-    const secs = TAW.lessonSections(L, mode);
+    const L = TAW.getLesson(day);
     if (sec === "finish") return finish(L);
-    sec = sec && secs.some(function (s) { return s[0] === sec; }) ? sec : (secs[0] ? secs[0][0] : "learn");
-    const i = secs.findIndex(function (s) { return s[0] === sec; });
-    const prog = st.progress[day] || {};
-    const next = secs[i + 1] ? `#/lesson/${day}/${secs[i + 1][0]}` : `#/lesson/${day}/finish`;
-    const prev = secs[i - 1] ? `#/lesson/${day}/${secs[i - 1][0]}` : null;
-    const ahead = !L.track && day > S.currentDay() && !st.completed[day];
-    return `<section class="lesson">
-      ${L.track ? `<a class="back" href="#/studio">← Studio</a>` : `<a class="back" href="#/">← Today</a>`}
-      <header class="lesson-head">
-        <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.kicker || "")}</p>
-        <h1>${esc(L.title)}</h1>
-        <p class="muted small">${esc(L.difficulty || "")} · ${TAW.lessonMinutes(L, mode)} min · ${mode} mode ${st.completed[day] ? "· ✓ completed" : ""}</p>
-        <div class="row wrap lesson-tools"><button class="btn small ghost" data-act="listen" aria-label="Listen to this section">▶ Listen</button>
-          <button class="pill es-toggle ${st.settings.lessonEs ? "on" : ""}" data-act="toggle-es" aria-pressed="${!!st.settings.lessonEs}" title="Show explanations in Spanish">ES · Español</button><span class="small muted">Tip: select any word to save it · swipe to move between sections</span></div>
-        ${ahead ? `<p class="note small">You’re ahead of your current day (${S.currentDay()}). That’s fine — explore freely.</p>` : ""}
-        ${L.generated && !L.aiWritten ? `<p class="note small">This lesson is drawn from the curriculum map. <button class="link" data-act="claude-lesson" data-day="${day}">Let Claude teach it to you, step by step ✦</button>${S.state.settings.aiKey ? ` · <button class="link" data-act="ai-lesson" data-day="${day}">Write it into the app (API) ✦</button>` : ""}</p>` : ""}
+    const secs = TAW.lessonSections(L, S.state.profile.mode);
+    if (!secs.length) return finish(L);
+    if (!sec || !secs.some(function (s) { return s[0] === sec; })) return cover(L, secs);
+    return step(L, secs, sec);
+  }
+  function cover(L, secs) {
+    const st = S.state, day = L.day, mode = st.profile.mode, prog = st.progress[day] || {}, E = esFor(L);
+    const done = !!st.completed[day], en = lessonEntry(L), resume = resumeSec(L, secs);
+    const ahead = !L.track && day > S.currentDay() && !done;
+    const month = !L.track && TAW.months[L.month - 1];
+    const startHref = done ? "#/lesson/" + day + "/" + secs[0][0] : en.doneN ? en.href : "#/lesson/" + day + "/" + secs[0][0];
+    const startLabel = done ? "↻ Go through it again" : en.doneN ? "▶ Continue · " + en.step : "▶ Start";
+    return `<section class="player p-cover">
+      <div class="p-bar"><a class="p-close" href="${lessonExit(L)}" aria-label="Close">✕</a><span class="p-crumb">${esc(TAW.lessonLabel(L))}${month ? " · Month " + L.month + " — " + esc(month.title) : ""}</span></div>
+      <p class="kicker">${esc(L.kicker || "")}</p>
+      <h1>${esc(L.title)}</h1>
+      ${L.why ? `<p class="lede">${L.why}${ES(at(E, "w"))}</p>` : ""}
+      ${done ? `<p class="note small">✓ You completed this lesson${st.completed[day].date ? " on " + esc(st.completed[day].date) : ""}. Revisit any step.</p>` : ""}
+      ${ahead ? `<p class="small muted">You’re ahead of your current day (Day ${S.currentDay()}) — that’s fine, explore freely.</p>` : ""}
+      <h3 class="section-title">Your path · ${secs.length} steps · about ${TAW.lessonMinutes(L, mode)} min</h3>
+      <ol class="lesson-path">${secs.map(function (s, i) {
+        const isDone = !!prog[s[0]] || done, isNext = !done && s[0] === resume;
+        const mins = mode === "quick" ? s[3] : s[2];
+        return `<li class="${isDone ? "done" : ""} ${isNext ? "next" : ""}"><a href="#/lesson/${day}/${s[0]}">
+          <span class="lp-n">${isDone ? "✓" : i + 1}</span>
+          <span class="lp-t"><b>${esc(s[1])}</b><span>${esc(STEP_HINT[s[0]] ? STEP_HINT[s[0]](L) : "")}</span></span>
+          <span class="lp-m">${mins ? mins + " min" : ""}</span></a></li>`;
+      }).join("")}</ol>
+      <div class="cover-opts">
+        <p class="lbl">Session length</p>
+        <div class="mode-row" role="group" aria-label="Session length">${[["quick", "Quick"], ["standard", "Standard"], ["deep", "Deep"]].map(function (m) { return `<button class="pill ${mode === m[0] ? "on" : ""}" data-act="mode" data-v="${m[0]}" aria-pressed="${mode === m[0]}">${m[1]} · ${TAW.lessonMinutes(L, m[0])} min</button>`; }).join("")}</div>
+        <button class="es-switch ${st.settings.lessonEs ? "on" : ""}" data-act="toggle-es" aria-pressed="${!!st.settings.lessonEs}">
+          <span class="es-sw-t"><b>Explicaciones en español</b><span lang="es">${st.settings.lessonEs ? "Activadas — lo que aprendes sigue en inglés" : "Muestra la traducción debajo de cada explicación"}</span></span>
+          <span class="sw" aria-hidden="true"><i></i></span></button>
         ${st.settings.lessonEs && !TAW.es[day] ? `<p class="note small" lang="es">Esta lección todavía no tiene traducción escrita. <button class="link" data-act="claude-es" data-day="${day}">Pídele a Claude que te la explique en español ✦</button></p>` : ""}
-        ${st.settings.lessonEs && TAW.es[day] ? `<p class="small muted es-hint" lang="es">Explicaciones en español debajo de cada texto. Las palabras, frases y ejemplos que estás aprendiendo siguen en inglés.</p>` : ""}
-      </header>
-      <nav class="sec-nav" aria-label="Lesson sections">${secs.map(function (s) { return `<a href="#/lesson/${day}/${s[0]}" class="${s[0] === sec ? "on" : ""} ${prog[s[0]] ? "done" : ""}" aria-current="${s[0] === sec ? "step" : "false"}">${prog[s[0]] ? "✓ " : ""}${s[1]}</a>`; }).join("")}</nav>
-      <article class="sec card" data-day="${day}" data-sec="${sec}">
+        ${L.generated && !L.aiWritten ? `<p class="note small">This lesson is drawn from the curriculum map. <button class="link" data-act="claude-lesson" data-day="${day}">Let Claude teach it to you, step by step ✦</button>${st.settings.aiKey ? ` · <button class="link" data-act="ai-lesson" data-day="${day}">Write it into the app (API) ✦</button>` : ""}</p>` : ""}
+      </div>
+      <p class="small muted cover-tip">Tip: select any word to save it. Swipe left or right to move between steps.</p>
+      <div class="p-foot"><a class="btn primary p-next" href="${startHref}">${startLabel}</a></div>
+    </section>`;
+  }
+  function step(L, secs, sec) {
+    const st = S.state, day = L.day, prog = st.progress[day] || {};
+    const i = secs.findIndex(function (s) { return s[0] === sec; });
+    const next = secs[i + 1] ? "#/lesson/" + day + "/" + secs[i + 1][0] : "#/lesson/" + day + "/finish";
+    const prev = secs[i - 1] ? "#/lesson/" + day + "/" + secs[i - 1][0] : "#/lesson/" + day;
+    return `<section class="player p-step" data-step="${sec}">
+      <div class="p-bar">
+        <a class="p-close" href="${lessonExit(L)}" aria-label="Close — your progress is saved">✕</a>
+        <a class="p-progress" href="#/lesson/${day}" aria-label="Step ${i + 1} of ${secs.length}. Open the lesson overview">${secs.map(function (s, k) { return `<i class="${k === i ? "cur" : prog[s[0]] || st.completed[day] ? "done" : ""}"></i>`; }).join("")}</a>
+        <button class="p-icon" data-act="listen" aria-label="Listen to this step">🔊</button>
+        <button class="p-icon es-toggle ${st.settings.lessonEs ? "on" : ""}" data-act="toggle-es" aria-pressed="${!!st.settings.lessonEs}" aria-label="Explicaciones en español">ES</button>
+      </div>
+      <p class="p-where"><a href="#/lesson/${day}">${i + 1} of ${secs.length} · ${esc(L.title)}</a></p>
+      <article class="sec" data-day="${day}" data-sec="${sec}">
         ${sectionHTML(L, sec)}
       </article>
-      <div class="lesson-foot">
-        ${prev ? `<a class="btn ghost" href="${prev}">← Back</a>` : "<span></span>"}
-        <a class="btn primary" href="${next}" data-act="sec-done" data-day="${day}" data-sec="${sec}">${secs[i + 1] ? "Continue: " + secs[i + 1][1] + " →" : "Finish the day →"}</a>
+      <div class="lesson-foot p-foot">
+        <a class="btn ghost p-back" href="${prev}" aria-label="${secs[i - 1] ? "Back to " + esc(secs[i - 1][1]) : "Back to the overview"}">←</a>
+        <a class="btn primary p-next" href="${next}" data-act="sec-done" data-day="${day}" data-sec="${sec}">${secs[i + 1] ? "Continue" : "Finish"} →</a>
       </div>
     </section>`;
   }
@@ -279,8 +344,11 @@ window.TAW = window.TAW || {};
         ${L.milestone && L.type !== "graduation" ? milestoneBlock(L) : ""}`;
       case "vocab": {
         const list = S.state.profile.mode === "quick" ? L.vocab.slice(0, 3) : L.vocab;
-        return `<p class="sec-label">Vocabulary</p><p class="muted">Not a list — a set of tools. Read the nuance, then make each word yours.</p>
-        ${list.map(function (v, i) { return vocabCard(v, day, i, at(E, "v", i)); }).join("")}`;
+        return `<p class="sec-label">Vocabulary</p><p class="muted">Not a list — a set of tools. One word at a time: read the nuance, then make it yours.</p>
+        <div class="vcar" data-vcar data-n="${list.length}">
+          <div class="vcar-head"><span class="vcar-count">Word <b>1</b> of ${list.length}</span><span class="vcar-dots">${list.map(function (v, i) { return `<button class="vdot ${i ? "" : "on"}" data-vgo="${i}" aria-label="Word ${i + 1}: ${esc(v.word)}"></button>`; }).join("")}</span></div>
+          ${list.map(function (v, i) { return `<div class="vslide ${i ? "" : "on"}" data-i="${i}">${vocabCard(v, day, i, at(E, "v", i))}</div>`; }).join("")}
+        </div>`;
       }
       case "culture": {
         const c = L.culture && TAW.cards[L.culture];
@@ -388,21 +456,47 @@ window.TAW = window.TAW || {};
   }
 
   function finish(L) {
-    const st = S.state, done = !!st.completed[L.day];
+    const st = S.state, day = L.day, done = !!st.completed[day];
     const card = L.culture && TAW.cards[L.culture];
-    return `<section class="lesson finish">
-      <a class="back" href="#/lesson/${L.day}">← Back to lesson</a>
-      <div class="card center">
-        <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.title)}</p>
-        <h1 class="serif">${done ? "Completed." : "Well done."}</h1>
-        <p class="lede">${L.vocab && L.vocab.length ? L.vocab.length + " words enter your review cycle. " : ""}${card ? esc(card.name) + " joins your Cultural Passport. " : ""}Your reflection goes to your Journal.</p>
-        ${done ? "" : `<p class="lbl">How interesting was today’s topic for you?</p>
-        <div class="row center">${[[1, "Not for me"], [2, "Interesting"], [3, "Fascinating"]].map(function (r) { return `<button class="pill" data-act="rate-lesson" data-v="${r[0]}">${r[1]}</button>`; }).join("")}</div>
-        <button class="btn primary big" data-act="complete" data-day="${L.day}">Mark ${esc(TAW.lessonLabel(L))} complete</button>`}
-        ${done && !L.track ? `<div class="row center"><a class="btn primary" href="#/">Back to Today</a><a class="btn" href="#/lesson/${L.day + 1 <= 180 ? L.day + 1 : 180}">Preview Day ${Math.min(180, L.day + 1)}</a></div>` : ""}
-        ${done && L.track ? `<div class="row center"><a class="btn primary" href="#/studio">Back to Studio</a>${TAW.nextTrackKey(L) ? `<a class="btn" href="#/lesson/${TAW.nextTrackKey(L)}">Next: ${esc(TAW.getLesson(TAW.nextTrackKey(L)).title)}</a>` : ""}</div>` : ""}
-        ${done ? `<div class="row center">${TAW.enh.sessionLink()}</div>` : ""}
+    const secs = TAW.lessonSections(L, st.profile.mode), prog = st.progress[day] || {};
+    const words = (L.vocab || []).map(function (v) { return v.word; });
+    const bar = `<div class="p-bar"><a class="p-close" href="${lessonExit(L)}" aria-label="Close">✕</a><a class="p-progress" href="#/lesson/${day}" aria-label="Lesson overview">${secs.map(function () { return `<i class="done"></i>`; }).join("")}</a></div>`;
+    const earned = `<ul class="earned">
+      ${words.length ? `<li><span class="e-ic">Aa</span><span><b>${words.length} ${words.length === 1 ? "word enters" : "words enter"} your review cycle</b><span class="chips">${words.map(function (w) { return `<span class="chip">${esc(w)}</span>`; }).join(" ")}</span></span></li>` : ""}
+      ${card ? `<li><span class="e-ic">✦</span><span><b>${esc(card.name)}</b> ${done ? "is in" : "joins"} your Cultural Passport</span></li>` : ""}
+      ${L.reflect ? `<li><span class="e-ic">✎</span><span>Your reflection ${done ? "is saved in" : "goes to"} your <b>Journal</b></span></li>` : ""}
+    </ul>`;
+    if (!done) {
+      const skipped = secs.filter(function (s) { return !prog[s[0]]; });
+      return `<section class="player p-finish">${bar}
+        <div class="fin">
+          <p class="kicker">${esc(TAW.lessonLabel(L))} · ${esc(L.title)}</p>
+          <h1>You made it to the end.</h1>
+          <p class="lede">One last tap to complete the day.</p>
+          ${earned}
+          ${skipped.length ? `<p class="small muted">Skipped: ${skipped.map(function (s) { return `<a href="#/lesson/${day}/${s[0]}">${esc(s[1])}</a>`; }).join(", ")} — that’s fine; you can come back any time.</p>` : ""}
+          <p class="lbl">How interesting was today’s topic for you?</p>
+          <div class="row center wrap">${[[1, "Not for me"], [2, "Interesting"], [3, "Fascinating"]].map(function (r) { return `<button class="pill" data-act="rate-lesson" data-v="${r[0]}">${r[1]}</button>`; }).join("")}</div>
+        </div>
+        <div class="p-foot"><button class="btn primary p-next" data-act="complete" data-day="${day}">✓ Complete ${esc(TAW.lessonLabel(L))}</button></div>
+      </section>`;
+    }
+    const nextTrack = L.track && TAW.nextTrackKey(L);
+    const path = L.track ? [] : todayPath(), nx = path.find(function (p) { return !p.done; });
+    return `<section class="player p-finish">${bar}
+      <div class="fin">
+        <div class="fin-badge" aria-hidden="true">✓</div>
+        <p class="kicker">${esc(TAW.lessonLabel(L))} · complete</p>
+        <h1>${esc(L.title)}</h1>
+        ${S.streak() > 1 ? `<p class="fin-streak">🔥 ${S.streak()} days in a row</p>` : ""}
+        ${earned}
+        ${nx ? `<a class="next-card" href="${nx.href}"><span class="kicker">Next on today’s path</span><b>${esc(nx.title)}</b><span class="small muted">${esc(nx.sub)}</span></a>` : !L.track ? `<p class="path-done">Today’s path is complete ✓ See you tomorrow.</p>` : ""}
         <p class="mentor">“${esc(TAW.mentorLines[(L.n || L.day) % TAW.mentorLines.length])}”</p>
+        ${!L.track && day < 180 ? `<p class="small center"><a href="#/lesson/${day + 1}">Preview Day ${day + 1}: ${esc(TAW.getLesson(day + 1).title)} →</a></p>` : ""}
+      </div>
+      <div class="p-foot">
+        <a class="btn ghost" href="${L.track ? "#/studio" : "#/"}">${L.track ? "Studio" : "Today"}</a>
+        ${nx ? `<a class="btn primary p-next" href="${nx.href}">${esc(nx.cta)}: ${esc(nx.title)} →</a>` : nextTrack ? `<a class="btn primary p-next" href="#/lesson/${nextTrack}">Next: ${esc(TAW.getLesson(nextTrack).title)} →</a>` : `<a class="btn primary p-next" href="${L.track ? "#/studio" : "#/"}">Done for today</a>`}
       </div>
     </section>`;
   }
@@ -414,17 +508,6 @@ window.TAW = window.TAW || {};
     const st = S.state, wk = studioWeek();
     const due = keys.slice(0, wk).find(function (k) { return !st.completed[k]; });
     return due || (wk < keys.length ? null : null);
-  }
-  function studioCard(key, label) {
-    const L = TAW.getLesson(key), done = S.state.completed[key];
-    return `<a class="sug-item" href="#/lesson/${key}"><span class="kicker">${esc(label || L.label)}${done ? " · ✓" : ""}</span><b>${esc(L.title)}</b><span class="small muted">${esc((L.why || "").slice(0, 140))}${(L.why || "").length > 140 ? "…" : ""}</span></a>`;
-  }
-  function studioBlock() {
-    const v = thisWeekTrack("voice"), b = thisWeekTrack("brain");
-    if (!v && !b) return "";
-    return `<section class="block"><h3 class="section-title">This week in the Studio</h3>
-      ${v ? studioCard(v, "The Senior Voice · " + TAW.getLesson(v).n + " of 24") : ""}${b ? studioCard(b, "The Learning Brain · " + TAW.getLesson(b).n + " of 8") : ""}
-      <p class="fine"><a href="#/studio">Open the Studio →</a></p></section>`;
   }
   function studio() {
     const st = S.state, w = st.profile.work || {};
@@ -918,5 +1001,5 @@ window.TAW = window.TAW || {};
     </section>`;
   }
 
-  TAW.views = { pageHeader: header, studio, home, lesson, journey, culture, card, library, book, film, words, speak, progress, journal, settings, onboarding, analysisHTML, aiHTML, speakBox };
+  TAW.views = { pageHeader: header, studio, home, lesson, todayPath, pathNextLink, journey, culture, card, library, book, film, words, speak, progress, journal, settings, onboarding, analysisHTML, aiHTML, speakBox };
 })();
