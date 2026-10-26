@@ -17,7 +17,7 @@ window.TAW = window.TAW || {};
       settings: { theme: "auto", textSize: "m", speechLang: "en-US", aiKey: "", aiModel: "claude-opus-5-5" },
       completed: {}, progress: {}, answers: {}, review: {}, words: {}, passport: {},
       books: {}, films: {}, speaking: [], journal: [], weekly: {}, interest: {}, overuse: {},
-      activity: {}, aiLessons: {}, recallLog: [], lastVisit: null, prevVisit: null
+      activity: {}, aiLessons: {}, recallLog: [], lab: {}, lastVisit: null, prevVisit: null
     };
   }
 

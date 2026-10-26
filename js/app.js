@@ -55,6 +55,7 @@
       case "journal": html = V.journal(r.a); break;
       case "settings": html = V.settings(); break;
       case "studio": html = V.studio(); break;
+      case "play": html = TAW.lab.view(r); break;
       default: html = V.home();
     }
     stopAllSessions();
@@ -70,6 +71,7 @@
     const h = main.querySelector("h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
     document.getElementById("offline").hidden = navigator.onLine;
     TAW.enh.afterRender(r);
+    TAW.lab.afterRender(r);
   }
   TAW.render = render;
   TAW.speakText = speakText;

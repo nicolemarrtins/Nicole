@@ -143,6 +143,12 @@ window.TAW = window.TAW || {};
       return intro() + "Find one significant news story from the last week, from reputable sources, that would make a rich learning opportunity (economics, technology, culture, science or society). Avoid partisan framing.\n\n" +
         "Give me: what verifiably happened (FACT), how analysts interpret it (INTERPRETATION, attributed), the range of opinions fairly (OPINION), 3–4 key concepts explained simply, 5 useful words, and a speaking prompt. Then ask for my view and give me feedback on how I express it.";
     },
+    roleplay: function (sc) {
+      return intro() + "Let’s role-play a real situation so I can practise. Scenario: “" + sc.title + "” — " + sc.where + ". " + sc.intro.replace(/\(.*?\)/g, "").trim() +
+        "\n\nYou play " + sc.who + ". Stay in character and keep each turn short (1–3 sentences), like a real conversation — challenge me a little, the way a real person would. " +
+        "After each of my replies, add one short coaching note in brackets: what worked, and a more natural or more articulate way to say it if needed. " +
+        "After about six exchanges, step out of character and give me three strengths, three improvements with better phrasings, and a score out of 10 for clarity, tone and confidence. Start now with your first line.";
+    },
     lessonEs: function (L) {
       return intro() + "Por favor, explícame en español (neutro, claro y cálido) la lección del " + TAW.lessonLabel(L) + ": “" + L.title + "”.\n" +
         "Enfoque: " + (L.why || "") + "\nPalabras: " + (L.vocab || []).map(function (v) { return v.word + (v.definition ? " (" + v.definition + ")" : ""); }).join("; ") +

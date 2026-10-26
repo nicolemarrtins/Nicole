@@ -182,6 +182,7 @@ window.TAW = window.TAW || {};
           <a class="act" href="#/words/review"><b>Review</b><span>${due} due</span></a>
         </div>
       </article>
+      ${TAW.lab.homeCard()}
       ${TAW.enh.dailyCards()}
       <section class="block">
         <h3 class="section-title">Your progress</h3>
