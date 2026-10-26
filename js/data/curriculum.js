@@ -1,5 +1,5 @@
 /* The 180-day curriculum map.
-   Days 1–14 are fully written in lessons-a/b.js. Every 7th day is a weekly review,
+   Days 1–59 are fully written in lessons-a…h.js; later days are built from this map. Every 7th day is a weekly review,
    Days 30/60/90/120/150/180 are milestones; both are generated from this map. */
 window.TAW = window.TAW || {};
 
