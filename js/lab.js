@@ -4,7 +4,7 @@
   const S = TAW.store;
   function esc(s) { return TAW.esc(s == null ? "" : String(s)); }
   const LEVELS = [[0, "Curious"], [150, "Clear"], [400, "Confident"], [800, "Fluent"], [1400, "Nuanced"], [2200, "Persuasive"], [3200, "Articulate"], [4500, "Eloquent"]];
-  const TITLES = { traps: "Spanish traps", tone: "Tone tuner", decode: "Decode", workout: "Today’s workout" };
+  const TITLES = { traps: "Spanish traps", tone: "Tone tuner", decode: "Decode", reframe: "Reframe it", workout: "Today’s workout" };
   const PRESSURE_MS = 20000;
   let run = null, timer = null;
 
@@ -13,7 +13,7 @@
     const st = S.state;
     if (!st.lab) st.lab = {};
     const l = st.lab;
-    ["days", "traps", "tone", "decode", "sims", "workouts"].forEach(function (k) { if (!l[k]) l[k] = {}; });
+    ["days", "traps", "tone", "decode", "reframe", "sims", "workouts"].forEach(function (k) { if (!l[k]) l[k] = {}; });
     if (!l.xp) l.xp = 0;
     if (!l.bestCombo) l.bestCombo = 0;
     return l;
@@ -91,8 +91,8 @@
       </div>
       <a class="lab-hero" href="#/play/workout">
         <p class="kicker">Today’s workout · about 5 minutes</p>
-        <h2 class="serif">${done ? "Done today ✓ — another round?" : "Seven quick rounds"}</h2>
-        <p class="small">A trap, a tone choice, a phrase to decode, a real conversation moment${due ? " and " + Math.min(2, due) + " of your due words" : ""}. Streaks earn bonus XP.</p>
+        <h2 class="serif">${done ? "Done today ✓ — another round?" : ["Six", "Seven", "Eight"][Math.min(2, due)] + " quick rounds"}</h2>
+        <p class="small">A trap, a tone choice, a phrase to decode, a calm reframe, a real conversation moment${due ? " and " + Math.min(2, due) + " of your due words" : ""}. Streaks earn bonus XP.</p>
         <span class="btn primary">${done ? "Go again" : "Start"} →</span>
       </a>
       <h3 class="section-title">Simulator · real conversations, your choices</h3>
@@ -102,6 +102,7 @@
         <a class="tool" href="#/play/traps"><b>Spanish traps</b><span>False friends, prepositions, emails — explained in Spanish · ${mastered("traps")}/${TAW.lab.traps.length} mastered</span></a>
         <a class="tool" href="#/play/tone"><b>Tone tuner</b><span>The right words for the right person · ${mastered("tone")}/${TAW.lab.tone.length}</span></a>
         <a class="tool" href="#/play/decode"><b>Decode</b><span>What they say vs what they mean · ${mastered("decode")}/${TAW.lab.decode.length}</span></a>
+        <a class="tool" href="#/play/reframe"><b>Reframe it</b><span>Calm an anxious thought: zoom out · I’ll figure it out · ${mastered("reframe")}/${TAW.lab.reframe.length}</span></a>
         <a class="tool" href="#/speak/find"><b>Find the words</b><span>Say an idea in Spanish — get natural English</span></a>
       </div>
       <p class="fine">XP measures practice, not talent. Anything you miss comes back sooner — that’s how memory works.</p>
@@ -216,17 +217,18 @@
     if (kind === "traps") items = prioritised(L.traps, "traps", 8).map(wrap("trap"));
     else if (kind === "tone") items = prioritised(L.tone, "tone", 5).map(wrap("tone"));
     else if (kind === "decode") items = prioritised(L.decode, "decode", 6).map(wrap("decode"));
+    else if (kind === "reframe") items = prioritised(L.reframe, "reframe", 6).map(wrap("reframe"));
     else {
       const traps = prioritised(L.traps, "traps", 2), due = S.dueItems().slice(0, 2);
       const sc = L.scenarios[Math.floor(Math.random() * L.scenarios.length)];
       items = [{ type: "trap", d: traps[0] }, { type: "decode", d: prioritised(L.decode, "decode", 1)[0] }];
       if (due[0]) items.push({ type: "recall", d: due[0] });
-      items.push({ type: "tone", d: prioritised(L.tone, "tone", 1)[0] }, { type: "trap", d: traps[1] });
+      items.push({ type: "tone", d: prioritised(L.tone, "tone", 1)[0] }, { type: "reframe", d: prioritised(L.reframe, "reframe", 1)[0] }, { type: "trap", d: traps[1] });
       items.push({ type: "turn", d: { sc: sc, t: Math.floor(Math.random() * sc.turns.length) } });
       if (due[1]) items.push({ type: "recall", d: due[1] });
     }
     items.forEach(function (it) {
-      const n = it.type === "trap" || it.type === "decode" ? it.d.opts.length : it.type === "tone" ? it.d.opts.length : it.type === "turn" ? it.d.sc.turns[it.d.t].opts.length : 0;
+      const n = it.type === "turn" ? it.d.sc.turns[it.d.t].opts.length : it.d.opts ? it.d.opts.length : 0;
       it.order = shuffle(range(n)); it.res = null;
     });
     return items;
@@ -257,6 +259,9 @@
     } else if (it.type === "tone") {
       body = `<p class="kicker">Tone tuner · ${esc(d.aud)}</p><p class="q-sit">${esc(d.sit)}</p>
         <p class="q-ask">Which works best?</p>${optButtons(d.opts.map(function (x) { return x.t; }), it.order)}`;
+    } else if (it.type === "reframe") {
+      body = `<p class="kicker">Reframe it · ${esc(d.tag)}</p><p class="q-sub small muted">An anxious thought:</p><blockquote class="q-line">“${esc(d.thought)}”</blockquote>
+        <p class="q-ask">Which thought would help most?</p>${optButtons(d.opts.map(function (x) { return x.t; }), it.order)}`;
     } else if (it.type === "decode") {
       body = `<p class="kicker">Decode · ${esc(d.who)}</p><blockquote class="q-line">${esc(d.line)}</blockquote>
         <p class="q-ask">What do they most likely mean?</p>${optButtons(d.opts, it.order)}`;
@@ -295,6 +300,10 @@
       fb = it.type === "trap"
         ? `<div class="fb-box ${ok ? "s2" : "s0"}"><b>${ok ? "✓ Natural English" : "Not quite"}</b>${ok ? "" : `<p class="stronger"><span>Natural English</span>${esc(d.opts[0])}</p>`}<p lang="es">${esc(d.es)}</p></div>`
         : `<div class="fb-box ${ok ? "s2" : "s0"}"><b>${ok ? "✓ You read it right" : "Not quite"}</b>${ok ? "" : `<p class="stronger"><span>Most likely meaning</span>${esc(d.opts[0])}</p>`}<p>${esc(d.fb)}</p></div>`;
+    } else if (it.type === "reframe") {
+      const s = d.opts[k].s; ok = s === 2; half = s === 1;
+      record("reframe", d.id, ok);
+      fb = `<div class="fb-box s${s}"><b>${["Feeds the anxiety", "Well meant — but…", "Helpful reframe"][s]}</b><ul class="all-fb">${it.order.map(function (j) { const x = d.opts[j]; return `<li class="s${x.s}"><span>${x.s === 2 ? "Helps" : x.s === 1 ? "Hmm" : "Avoid"}</span>${esc(x.fb)}</li>`; }).join("")}</ul></div>`;
     } else if (it.type === "tone") {
       const s = d.opts[k].s; ok = s === 2; half = s === 1;
       record("tone", d.id, ok);
@@ -309,7 +318,7 @@
     st.querySelectorAll(".opt").forEach(function (b) {
       const j = +b.getAttribute("data-k");
       b.disabled = true;
-      const right = it.type === "tone" ? d.opts[j].s === 2 : it.type === "turn" ? d.sc.turns[d.t].opts[j].s === 2 : j === 0;
+      const right = it.type === "tone" || it.type === "reframe" ? d.opts[j].s === 2 : it.type === "turn" ? d.sc.turns[d.t].opts[j].s === 2 : j === 0;
       if (right) b.classList.add("right");
       if (j === k && !right) b.classList.add(half ? "half" : "wrong");
       if (j === k) b.classList.add("chosen");

@@ -320,3 +320,66 @@ TAW.lab.decode = [
     "Faint praise that implies criticism. Try: “How would you approach it?” — you may learn something.")
 ];
 })();
+
+/* ── Reframe it: anxious thoughts → the most helpful reframe (The Calm Mind) ── */
+(function () {
+function rf(id, tag, thought, opts) { return { id: id, tag: tag, thought: thought, opts: opts.map(function (x) { return { t: x[0], s: x[1], fb: x[2] }; }) }; }
+TAW.lab.reframe = [
+  rf("meeting-mistake", "Spotlight effect", "I made a mistake in the meeting. Everyone thinks I’m incompetent now.", [
+    ["One slip in a two-hour meeting. Most people were thinking about their own slides — and I corrected it. I’ll double-check the numbers next time.", 2, "Puts it in proportion (people notice far less than we think — the spotlight effect), stays honest, and ends with an action."],
+    ["Don’t think about it. It doesn’t matter at all.", 1, "Well meant, but trying not to think about something usually makes it louder. Acknowledge it, then put it in proportion."],
+    ["They definitely noticed. My boss will bring it up at my review.", 0, "Mind-reading plus fortune-telling — two classic anxious distortions. You can’t know what they think, and you’re predicting the worst."]]),
+  rf("career-over", "Zoom out", "If this presentation goes badly, my career is over.", [
+    ["This is one presentation in a long career. Even if it goes badly, I’ll learn from it — and I’ve recovered from worse.", 2, "Zooms out (one event, a long career) and adds resilience (“I’ll learn from it”). Calm, and true."],
+    ["It will be perfect. It has to be.", 1, "Positive on the surface, but it sets an impossible standard — so any small slip brings the anxiety back twice as strong."],
+    ["Exactly — so every single detail has to be flawless.", 0, "Catastrophising feeding perfectionism. The higher the imagined stakes, the worse most people perform."]]),
+  rf("freeze-english", "I’ll handle it", "What if I can’t find the right word in English and freeze?", [
+    ["If I freeze, I’ll paraphrase — “What’s the word… it’s like…”. People do that in their first language too. I’ll handle it.", 2, "Turns the what-if into a plan. Having a tool ready is what makes the fear smaller."],
+    ["Then I just won’t speak unless I’m completely sure.", 1, "Avoidance brings relief now and more anxiety later — every silence teaches your brain that speaking is dangerous."],
+    ["Everyone will realise my English isn’t good enough for this job.", 0, "Catastrophising — and probably untrue. Listeners are focused on your ideas, not your grammar."]]),
+  rf("no-reply", "Check the evidence", "My manager hasn’t replied to my email. She must be annoyed with me.", [
+    ["There are many reasons she hasn’t replied — she’s probably swamped. If it matters, I’ll follow up tomorrow.", 2, "Considers other explanations and sets a calm next step. Evidence first, conclusions later."],
+    ["I’ll send another email right now to check that everything is OK.", 1, "Reassurance-seeking: it calms you for a minute but trains your brain to need constant reassurance."],
+    ["I knew she didn’t like my proposal.", 0, "Jumping to conclusions — a silence becomes a verdict."]]),
+  rf("everything-wrong", "Zoom out", "Everything is going wrong this week.", [
+    ["Two things went wrong this week — the delivery and that call. The rest is fine. Let me deal with those two.", 2, "Replaces “everything” with specifics. Precise language is calming: it turns a fog into a short list."],
+    ["Whatever — nothing matters anyway.", 1, "Zooming out helps, but “nothing matters” can slide into giving up. Aim for proportion, not indifference: some things do matter — just fewer than anxiety says."],
+    ["This always happens to me.", 0, "Overgeneralising: “always” and “everything” turn a bad week into a bad life."]]),
+  rf("not-qualified", "Imposter feelings", "I’m not really qualified for this new role. Sooner or later they’ll find out.", [
+    ["Feeling new isn’t the same as being unqualified. They chose me for real reasons — and what I don’t know yet, I’ll learn.", 2, "Answers the imposter feeling with evidence and a growth step — kindly and honestly."],
+    ["I’ll just work twice as hard so nobody notices.", 1, "A classic imposter pattern: overwork as camouflage. It exhausts you — and never convinces you."],
+    ["Maybe I should tell them they made a mistake hiring me.", 0, "The imposter phenomenon talking. Feeling like a fraud is common in high achievers — it’s a feeling, not a fact."]]),
+  rf("flight-delay", "Control", "What if the flight is delayed and I miss the client meeting?", [
+    ["I can’t control the flight. I can take the earlier one — and if it’s still delayed, I’ll join by video. Plan B is ready.", 2, "Separates what’s in your hands from what isn’t, and makes a contingency plan. Then the worry has nothing left to do."],
+    ["I’ll keep checking the flight status every ten minutes.", 1, "Checking feels like control but feeds the worry loop. Make the plan once, then let it go."],
+    ["This whole trip is going to be a disaster.", 0, "Fortune-telling: turning a possibility into a certain disaster."]]),
+  rf("feedback-tears", "I’ll handle it", "I have to give difficult feedback tomorrow — and she might cry.", [
+    ["She might be upset, and that’s OK. I’ll be kind and clear, give her time, and we’ll get through it together.", 2, "Accepts the discomfort instead of fearing it — and trusts that you can handle the moment."],
+    ["I’ll keep the feedback vague so she doesn’t get upset.", 1, "Vagueness protects you now and hurts her development later — ruinous empathy."],
+    ["I’ll cancel the meeting and wait for a better moment.", 0, "Avoidance postpones the anxiety — and usually makes it grow."]]),
+  rf("racing-heart", "Reappraise", "My heart is racing before the presentation. I’m going to fail.", [
+    ["My body is getting ready. This is energy — I’m excited. One long breath out, and go.", 2, "Reappraisal: the same racing heart, a different meaning. Research by Alison Wood Brooks found this works better than trying to calm down."],
+    ["Calm down. Calm down. Calm down.", 1, "Telling yourself to calm down rarely works when your body is already highly aroused."],
+    ["Everyone will see how nervous I am.", 0, "The illusion of transparency: people see far less of your nerves than you feel."]]),
+  rf("awkward-dinner", "Self-compassion", "I said something awkward at dinner and I keep replaying it.", [
+    ["That was a little awkward — it happens to everyone. If a friend told me this story, I’d smile. Time to let it go.", 2, "Common humanity plus kindness: you treat yourself as you would treat a friend."],
+    ["I’ll message them tonight to apologise for being weird.", 1, "Usually unnecessary — and it draws attention to something nobody else remembers."],
+    ["I’m so socially incompetent.", 0, "One awkward sentence becomes a verdict on your whole personality."]]),
+  rf("project-fail", "Control", "The project might fail, and it’s my responsibility.", [
+    ["Some of it is in my hands — the plan, the team, the risks I flag. Some isn’t. I’ll do my part well and flag the rest early.", 2, "The dichotomy of control, applied: full energy on your circle of influence, honesty about the rest."],
+    ["If I work every weekend, it can’t fail.", 1, "Overwork as a guarantee — it isn’t one, and burnout makes failure more likely."],
+    ["If it fails, everyone will blame me forever.", 0, "Catastrophising and “forever” thinking. Projects fail all the time; careers continue."]]),
+  rf("behind-in-life", "Zoom out", "I’m not where I thought I’d be at this age.", [
+    ["I’m comparing my everyday life with other people’s highlight reels. Looking back five years, I’ve grown a lot — and there’s plenty of time ahead.", 2, "Zooms out across time and replaces comparison with your own progress."],
+    ["It doesn’t matter — life is meaningless anyway.", 1, "Perspective tipped into nihilism. The point of zooming out is to see what really matters — not to decide that nothing does."],
+    ["It’s too late to change anything now.", 0, "An imaginary deadline. Your brain stays plastic all your life — it is rarely too late to learn."]]),
+  rf("cant-sleep", "Worry time", "I can’t sleep — tomorrow’s meeting is too important.", [
+    ["I’ll write down what’s worrying me and one next step, then leave it on paper until the morning. Tired-me at midnight isn’t the best judge.", 2, "Worry time: give the worry an appointment, and protect your sleep — which is part of your performance."],
+    ["I’ll get up and prepare a bit more.", 1, "Understandable, but a rested brain beats one more hour of slides."],
+    ["If I don’t sleep, I’ll be terrible tomorrow — and now I definitely won’t sleep.", 0, "Worrying about not sleeping is what keeps you awake. Write it down, and rest even if sleep comes slowly."]]),
+  rf("criticised", "I’ll handle it", "Someone criticised my idea in front of everyone.", [
+    ["That stung. But criticism of an idea isn’t a judgement of me. I’ll take what’s useful and respond calmly tomorrow.", 2, "Allows the feeling, separates the idea from yourself and chooses a calm response."],
+    ["I’ll never share an idea in that meeting again.", 1, "Avoidance protects you once — and shrinks your voice for good."],
+    ["They wanted to humiliate me.", 0, "Mind-reading — assigning the worst intention. Most criticism is clumsy, not cruel."]])
+];
+})();

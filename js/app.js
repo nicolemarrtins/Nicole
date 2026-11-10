@@ -65,7 +65,7 @@
     main.innerHTML = html;
     window.scrollTo(0, 0);
     document.querySelectorAll("[data-nav]").forEach(function (a) {
-      const on = a.getAttribute("data-nav") === r.name || (r.name === "lesson" && a.getAttribute("data-nav") === (/^[vb]\d/.test(r.a || "") ? "studio" : "home")) || (["card"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "culture") || (["book", "film"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "library");
+      const on = a.getAttribute("data-nav") === r.name || (r.name === "lesson" && a.getAttribute("data-nav") === (/^[vbc]\d/.test(r.a || "") ? "studio" : "home")) || (["card"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "culture") || (["book", "film"].indexOf(r.name) >= 0 && a.getAttribute("data-nav") === "library");
       a.classList.toggle("on", on);
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });

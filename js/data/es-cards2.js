@@ -11,5 +11,12 @@ TAW.esCards = Object.assign(TAW.esCards || {}, {
   "plato-dialogues": "Filosofía escrita como conversación: las ideas se desarrollan con preguntas, objeciones, ejemplos y explicaciones. Un modelo para pensar en voz alta con otras personas.",
   "bayard": "Un ensayo lúdico pero serio de un profesor de literatura francés, que sostiene que nuestra relación con cualquier libro es parcial, y que hablar con inteligencia de libros no exige haber leído cada página.",
   "warmth-competence": "Investigaciones que sugieren que juzgamos a las personas, y a los grupos, en dos dimensiones principales: ¿son cálidas (bienintencionadas, amables) y son competentes (capaces)?",
-  "franklin-effect": "La idea de que llegamos a apreciar a las personas a las que les hemos hecho un favor. Franklin la describió en su Autobiografía y luego la estudiaron los psicólogos."
+  "franklin-effect": "La idea de que llegamos a apreciar a las personas a las que les hemos hecho un favor. Franklin la describió en su Autobiografía y luego la estudiaron los psicólogos.",
+  "fight-or-flight": "El sistema de alarma del cuerpo: cuando percibimos un peligro, la adrenalina nos prepara para luchar o huir. Salvó a nuestros antepasados, y es la razón por la que se te acelera el corazón antes de una presentación.",
+  "beck-cbt": "El psiquiatra que demostró que nuestras emociones a menudo siguen a nuestras interpretaciones, y fundó la terapia cognitiva, la base de la TCC, uno de los tratamientos más estudiados para la ansiedad y la depresión.",
+  "view-from-above": "Un antiguo ejercicio de perspectiva: imaginar que miras tu vida desde muy alto, hasta que las preocupaciones de hoy se encogen a su tamaño real.",
+  "jeffers": "Un clásico de autoayuda construido sobre una idea: debajo de casi todo miedo está la creencia “no voy a poder”, y el antídoto es “pase lo que pase, podré con ello”.",
+  "spotlight-effect": "Sobrestimamos cuánto se fijan los demás en nosotros: en nuestros errores, nuestro aspecto, nuestros nervios. Uno de los hallazgos más tranquilizadores de la psicología social.",
+  "imposter-phenomenon": "La sensación persistente de ser un fraude a pesar de pruebas claras de éxito. Se describió primero en mujeres de alto rendimiento, y la reconocen muchas personas senior de cualquier género.",
+  "frankl": "El relato de un psiquiatra que sobrevivió a los campos de concentración nazis, y su argumento de que incluso en las peores circunstancias conservamos la libertad de elegir nuestra actitud."
 });

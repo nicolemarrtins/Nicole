@@ -511,9 +511,9 @@ window.TAW = window.TAW || {};
   }
   function studio() {
     const st = S.state, w = st.profile.work || {};
-    return `<section>${header("Professional & science tracks", "Studio", "Two tracks that run alongside the main journey — one lesson a week each, at your own pace.")}
+    return `<section>${header("Professional, science & wellbeing tracks", "Studio", "Three tracks that run alongside the main journey — one lesson a week each, at your own pace.")}
       ${!w.role && !w.industry ? `<p class="note small">Tell the app about your work in <a href="#/settings">Settings → Your work</a>, and every “Ask Claude” request will be tailored to your role and industry.</p>` : `<p class="small muted">Tailored to: ${esc([w.role, w.industry].filter(Boolean).join(" · "))} <a href="#/settings">edit</a></p>`}
-      ${["voice", "brain"].map(function (id) {
+      ${["voice", "brain", "calm"].map(function (id) {
         const t = TAW.tracks[id];
         const keys = t.modules.reduce(function (a, m) { return a.concat(m.lessons); }, []);
         const doneN = keys.filter(function (k) { return st.completed[k]; }).length;
