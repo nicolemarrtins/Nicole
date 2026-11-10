@@ -3,6 +3,8 @@
 > Read widely. Think deeply. Speak clearly. Stay curious.
 
 > **Also in this repo:** [How to Become Taylor Swift in 180 Days](swift/) — a ridiculously serious (unofficial, parody) creative-writing and English game. See [`swift/README.md`](swift/README.md).
+>
+> **And:** [Cielo](stars/) — a birth-chart app calculated with astronomical precision (daily transits, the Moon, synastry, a sky calendar and an on-device experiment that tests the readings). See [`stars/README.md`](stars/README.md).
 
 A personal 180-day program for becoming more articulate, better read and more confident in English — built as an installable, offline-first web app.
 

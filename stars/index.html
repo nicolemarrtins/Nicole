@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cielo</title>
+<meta name="description" content="Tu carta natal calculada con precisión astronómica: tránsitos diarios, la Luna, un calendario del cielo y un experimento con tus propios datos.">
+<meta name="theme-color" content="#0A0C16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cielo">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/cielo.css">
+</head>
+<body class="no-tabs">
+<main id="main"></main>
+<nav class="tabbar" aria-label="Cielo">
+  <a data-tab="today" href="#/today"><svg class="gl" aria-hidden="true"><use href="#g-today"/></svg><span>Hoy</span></a>
+  <a data-tab="chart" href="#/chart"><svg class="gl" aria-hidden="true"><use href="#g-wheel"/></svg><span>Carta</span></a>
+  <a data-tab="people" href="#/people"><svg class="gl" aria-hidden="true"><use href="#g-people"/></svg><span>Personas</span></a>
+  <a data-tab="calendar" href="#/calendar"><svg class="gl" aria-hidden="true"><use href="#g-calendar"/></svg><span>Calendario</span></a>
+  <a data-tab="journal" href="#/journal"><svg class="gl" aria-hidden="true"><use href="#g-journal"/></svg><span>Diario</span></a>
+</nav>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="js/vendor/astronomy.browser.min.js"></script>
+<script src="js/astro.js"></script>
+<script src="js/glyphs.js"></script>
+<script src="js/places-data.js"></script>
+<script src="js/places.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/texts-es.js"></script>
+<script src="js/texts-en.js"></script>
+<script src="js/reading.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /* Offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "taw-v13";
+const VERSION = "taw-v14";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/styles.css",
   "js/data/curriculum.js", "js/data/lessons-a.js", "js/data/lessons-b.js", "js/data/lessons-c.js", "js/data/lessons-d.js", "js/data/lessons-e.js", "js/data/lessons-f.js", "js/data/lessons-g.js", "js/data/lessons-h.js", "js/data/passport.js", "js/data/passport-b.js",
@@ -28,6 +28,7 @@ self.addEventListener("fetch", function (e) {
     return;
   }
   if (url.origin !== location.origin) return;
+  if (/\/(stars|swift)\//.test(url.pathname)) return; // sibling apps in this repo have their own service workers
   // app shell: cache first, refresh in background
   e.respondWith(caches.open(VERSION).then(function (c) {
     return c.match(req, { ignoreSearch: true }).then(function (hit) {
