@@ -15,7 +15,7 @@ random.seed(20261110)
 FLAGS = swe.FLG_MOSEPH | swe.FLG_SPEED
 BODIES = [("sun", swe.SUN), ("moon", swe.MOON), ("mercury", swe.MERCURY), ("venus", swe.VENUS), ("mars", swe.MARS),
           ("jupiter", swe.JUPITER), ("saturn", swe.SATURN), ("uranus", swe.URANUS), ("neptune", swe.NEPTUNE),
-          ("pluto", swe.PLUTO), ("node", swe.TRUE_NODE), ("meanNode", swe.MEAN_NODE)]
+          ("pluto", swe.PLUTO), ("node", swe.TRUE_NODE), ("meanNode", swe.MEAN_NODE), ("lilith", swe.MEAN_APOG)]
 
 cases = []
 for i in range(80):
@@ -29,10 +29,11 @@ for i in range(80):
         xx, _ = swe.calc_ut(jd, pid, FLAGS)
         planets[name] = [round(xx[0], 6), round(xx[3], 6)]
     cusps, ascmc = swe.houses(jd, lat, lng, b"P")
-    cases.append({
+    extra = {key: [round(c, 6) for c in swe.houses(jd, lat, lng, code)[0][:12]] for key, code in (("koch", b"K"), ("regio", b"R"), ("equal", b"E"))}
+    cases.append(dict({
         "utc": when.strftime("%Y-%m-%dT%H:%M:%SZ"), "lat": lat, "lng": lng, "planets": planets,
         "placidus": [round(c, 6) for c in cusps[:12]], "asc": round(ascmc[0], 6), "mc": round(ascmc[1], 6),
-    })
+    }, **extra))
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reference.json")
 with open(out, "w") as f:

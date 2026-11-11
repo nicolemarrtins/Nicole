@@ -1,13 +1,16 @@
 /* Cielo — app shell: state, router, views and events. */
 (function () {
   "use strict";
-  var KEY = "cielo.v1", DIST_KEY = "cielo.dist", APP_VERSION = "1.0", FORMULA = 1;
+  var KEY = "cielo.v1", DIST_KEY = "cielo.dist", APP_VERSION = "2.0", FORMULA = 1;
   var main = document.getElementById("main");
 
   /* ---------- state ---------- */
   function defaults(s) {
     s = s && typeof s === "object" ? s : {};
-    s.v = 1; s.lang = s.lang === "en" ? "en" : "es"; s.theme = s.theme || "auto"; s.houses = s.houses === "whole" ? "whole" : "placidus";
+    s.v = 1; s.lang = s.lang === "en" ? "en" : "es"; s.theme = s.theme || "auto";
+    s.houses = ["placidus", "koch", "regio", "equal", "whole"].indexOf(s.houses) >= 0 ? s.houses : "placidus";
+    s.questions = Array.isArray(s.questions) ? s.questions : []; s.answers = s.answers && typeof s.answers === "object" ? s.answers : {};
+    s.blindRuns = Array.isArray(s.blindRuns) ? s.blindRuns : []; s.quizBest = +s.quizBest || 0; s.here = s.here && isFinite(s.here.lat) ? s.here : null;
     if (s.blind === undefined) s.blind = true;
     s.people = Array.isArray(s.people) ? s.people : []; s.diary = s.diary && typeof s.diary === "object" ? s.diary : {};
     return s;
@@ -86,6 +89,9 @@
         case "journal": html = vJournal(r.a); break;
         case "settings": html = vSettings(); break;
         case "about": html = vAbout(); break;
+        case "deep": html = vDeep(); break;
+        case "ask": html = r.a === "horary" ? vHoraryForm() : r.a === "h" ? vHorary(r.b) : r.a === "quiz" ? vQuiz() : r.a === "blind" ? vBlind() : r.a === "prompts" ? vPrompts() : vAskHub(); break;
+        case "here": html = vHere(); break;
         default: html = vToday("");
       }
     } catch (e) {
@@ -93,7 +99,7 @@
       html = header("Cielo") + '<p class="note">' + esc(e.message) + "</p>";
     }
     main.innerHTML = html;
-    var tab = { today: "today", chart: "chart", people: "people", calendar: "calendar", journal: "journal" }[r.name] || "";
+    var tab = { today: "today", chart: "chart", deep: "chart", people: "people", calendar: "calendar", journal: "journal", ask: "ask" }[r.name] || "";
     document.querySelectorAll(".tabbar a").forEach(function (a) { a.classList.toggle("on", a.dataset.tab === tab); a.querySelector("span").textContent = U().tabs[a.dataset.tab]; });
     document.body.classList.toggle("no-tabs", !S.me || r.name === "welcome" || r.name === "setup" || r.name === "reveal" || (r.name === "people" && (r.a === "new" || r.b === "edit")));
     var here = location.hash;
@@ -103,7 +109,8 @@
   }
   function after(r) {
     if (r.name === "setup" || (r.name === "people" && (r.a === "new" || r.b === "edit"))) formInit();
-    if (r.name === "calendar") calFill();
+    if (r.name === "calendar") { calFill(); yearFill(); }
+    if (r.name === "here") { F = { mode: "here", place: null }; showPlace(); }
     if (r.name === "journal") expFill();
     if (r.name === "today") toneFill();
   }
@@ -167,6 +174,8 @@
     // do / avoid
     o.push('<section class="card dodont"><div><div class="kicker">' + u.today.do + "</div><ul>" + D.doList.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") +
       '</ul></div><div><div class="kicker">' + u.today.avoid + "</div><ul>" + D.avoidList.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul></div></section>");
+    // question of the day
+    o.push('<section class="card dq"><div class="kicker">' + g("ask") + " " + u2().daily.title + "</div>" + promptBox(D.prompt, u2().daily.ph, u2().daily.save) + "</section>");
     // climate + tone
     var hidden = S.blind && !(entry && entry.r);
     o.push('<section class="card climate"><div class="row-h"><span class="kicker">' + u.today.climate + '</span><a class="mini" href="#/about">' + u.today.toneHow + "</a></div>");
@@ -181,7 +190,8 @@
     if (!D.transits.length) o.push('<p class="muted">' + u.today.none + "</p>");
     o.push('<div class="list">' + D.transits.map(function (t) {
       return '<details class="tr ' + t.nature + '"><summary>' + '<span class="tr-g">' + g(t.t) + g(t.key, "asp") + g(t.n) + "</span>" +
-        '<span class="tr-t">' + esc(t.title) + '<small>' + exactLabel(t, D.noon) + " · " + t.orb + "</small></span></summary><p>" + esc(t.text) + "</p></details>";
+        '<span class="tr-t">' + esc(t.title) + '<small>' + (t.win ? winShort(t.win) : exactLabel(t, D.noon)) + " · " + t.orb + "</small></span></summary><p>" + esc(t.text) + "</p>" +
+        (t.house ? '<p class="tr-x">' + esc(fmt(U().tr2.house, { n: t.house, dom: X().houses[t.house - 1].dom })) + "</p>" : "") + (t.win ? winLong(t.win) : "") + "</details>";
     }).join("") + "</div></section>");
     // retrogrades
     o.push('<section class="block"><h3 class="sh">' + u.today.retro + "</h3>" + (D.retros.length ? '<div class="chips">' + D.retros.map(function (r) {
@@ -232,12 +242,14 @@
     if (!c.timeKnown) o.push('<p class="note">' + g("info") + " " + u.chart.noTime + (c.moonRange ? " " + fmt(u.chart.moonRange, { a: Reading.deg(c.moonRange[0]) + " " + sname(Sky.signOf(c.moonRange[0])), b: Reading.deg(c.moonRange[1]) + " " + sname(Sky.signOf(c.moonRange[1])) }) : "") + "</p>");
     if (c.houseFallback) o.push('<p class="note">' + g("info") + " " + u.chart.fallback + "</p>");
     o.push(bigThree(c));
+    o.push('<a class="card deep-cta" href="#/deep">' + g("spark") + "<span><b>" + u2().deep.cta + "</b><small>" + u2().deep.ctaSub + "</small></span>" + g("fwd", "chev") + "</a>");
+    if (c.timeKnown) o.push(precisionCard(c));
     // points
-    o.push('<section class="block"><h3 class="sh">' + u.chart.points + '</h3><div class="list">' + Reading.POINTS.filter(function (k) { return c.points[k]; }).map(function (k) {
+    o.push('<section class="block"><h3 class="sh">' + u.chart.points + '</h3><div class="list">' + POINTS2.filter(function (k) { return c.points[k]; }).map(function (k) {
       var p = Reading.point(c, k, S.lang);
       return '<a class="row" href="#/chart/' + k + '">' + g(k, "rg") + '<span class="row-t"><b>' + p.name + "</b>" +
         '<span>' + g(Sky.SIGN_KEYS[p.sign], "sg") + p.signName + " " + p.deg + (p.retro ? " " + g("retro", "rx") : "") + "</span></span>" +
-        (p.house ? '<span class="pill">' + p.house + "</span>" : "") + g("fwd", "chev") + "</a>";
+        (p.dignity ? '<span class="pill dg ' + p.dignity.key + '">' + p.dignity.name + "</span>" : "") + (p.house ? '<span class="pill">' + p.house + "</span>" : "") + g("fwd", "chev") + "</a>";
     }).join("") + "</div></section>");
     // balance
     var bal = Reading.balance(c, S.lang);
@@ -277,6 +289,9 @@
     o.push('<p class="pt-d">' + esc(p.desc) + "</p>");
     if (p.signText) o.push('<article class="card"><div class="kicker">' + esc(p.title) + "</div><p>" + esc(p.signText) + "</p></article>");
     if (p.houseText) o.push('<article class="card"><div class="kicker">' + esc(p.houseTitle) + "</div><p>" + esc(p.houseText) + "</p></article>");
+    if (p.dignity) o.push('<article class="card"><div class="kicker">' + u2().extra.dignity + " · " + p.dignity.name + "</div><p>" + esc(p.dignity.text) + "</p></article>");
+    if (k === "lilith") o.push('<p class="note">' + g("info") + " " + u2().extra.lilithNote + "</p>");
+    if (p.prompts && !who) o.push('<section class="think"><div class="kicker">' + u2().deep.think + "</div>" + p.prompts.map(function (q, i) { return promptBox({ id: "natal-" + k + "-" + i, q: q }); }).join("") + "</section>");
     var mine = c.aspects.filter(function (a) { return a.a === k || a.b === k; });
     o.push('<section class="block"><h3 class="sh">' + u.point.aspects + '</h3><div class="list">' + (mine.length ? mine.map(function (a) { return aspRow(a, false); }).join("") : '<p class="muted">' + u.point.none + "</p>") + "</div></section>");
     var sign = X().signs[p.sign];
@@ -418,7 +433,7 @@
   var calCache = null, calFilter = "all";
   function vCalendar() {
     var u = U(), tz = ""; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { }
-    return header(u.cal.title) + '<div class="chips filt">' + ["all", "moons", "retro", "ingress", "eclipses"].map(function (k) {
+    return header(u.cal.title) + '<section id="year" class="year"><p class="loading">' + g("wheel", "spin") + " " + u.cal.loading + "</p></section>" + '<h3 class="sh">' + u.cal.title + "</h3>" + '<div class="chips filt">' + ["all", "moons", "retro", "ingress", "eclipses"].map(function (k) {
       return '<button class="chip' + (calFilter === k ? " on" : "") + '" data-act="cal-f" data-v="' + k + '">' + u.cal[k] + "</button>";
     }).join("") + '</div><p class="muted small">' + esc(fmt(u.cal.tz, { tz: tz.replace(/_/g, " ") })) + '</p><div id="cal"><p class="loading">' + g("wheel", "spin") + " " + u.cal.loading + "</p></div>";
   }
@@ -511,15 +526,192 @@
   }
   function num(v, d) { return v.toFixed(d).replace(".", S.lang === "es" ? "," : "."); }
 
+  /* ---------- Cielo 2: deep reading, your year, questions ---------- */
+  var POINTS2 = Reading.POINTS.concat(["chiron", "lilith", "fortune"]);
+  function u2() { return U(); }
+  function dsh(d) { return Reading.dshort(d, S.lang); }
+  function winShort(w) { return w.start && w.end ? fmt(U().tr2.window, { a: dfmt(w.start, { day: "numeric", month: "short" }), b: dsh(w.end) }) : U().tr.far; }
+  function winLong(w) { return w.exacts && w.exacts.length ? '<p class="tr-x">' + esc(fmt(U().tr2.exacts, { list: w.exacts.map(dsh).join(" · ") })) + "</p>" : ""; }
+  function promptBox(p, ph, btn) {
+    var saved = S.answers[p.id] ? S.answers[p.id].a : "";
+    return '<div class="pq"><p class="pq-q">' + esc(p.q) + '</p><textarea data-pid="' + esc(p.id) + '" rows="2" maxlength="1200" placeholder="' + esc(ph || U().deep.answerPh) + '">' + esc(saved) + "</textarea>" +
+      '<button class="btn ghost small" data-act="save-answer" data-id="' + esc(p.id) + '" data-q="' + esc(p.q) + '">' + (btn || U().deep.save) + "</button></div>";
+  }
+  function degSign(l) { return Reading.deg(l) + " " + sname(Sky.signOf(l)); }
+  function precisionCard(c) {
+    var u = U().extra, s0 = Sky.signOf(c.points.asc.lon);
+    function ascAt(m) { return Sky.angles(new Date(c.utc + m * 60000), c.lat, c.lng).asc; }
+    var a10 = [ascAt(-10), ascAt(10)], a30 = [ascAt(-30), ascAt(30)];
+    var same = a30.every(function (v) { return Sky.signOf(v) === s0; }), edge = a10.some(function (v) { return Sky.signOf(v) !== s0; });
+    var txt = same ? fmt(u.sensSame, { s: sname(s0) }) : fmt(u.sens, { a: degSign(a10[0]), b: degSign(a10[1]), c: degSign(a30[0]), d: degSign(a30[1]) }) + (edge ? " " + u.sensEdge : "");
+    return '<section class="card prec"><div class="kicker">' + g("info") + " " + u.precision + "</div><p>" + esc(txt) + "</p></section>";
+  }
+  function herePlace() { return S.here || S.me.place; }
+  function vDeep() {
+    var u = U(), c = chartOf(S.me), secs = Reading.deep(c, S.lang), o = [header(u.deep.title, { back: "#/chart", kicker: esc(S.me.name || "") })];
+    if (!c.timeKnown) o.push('<p class="note">' + g("info") + " " + u.deep.noTime + "</p>");
+    o.push('<nav class="toc">' + secs.map(function (sc) { return '<button data-act="toc" data-v="' + sc.id + '">' + sc.title + "</button>"; }).join("") + "</nav>");
+    secs.forEach(function (sc) {
+      o.push('<section class="deep-sec" id="deep-' + sc.id + '"><h2 class="ds-h">' + (sc.keys ? sc.keys.map(function (k) { return g(k, "ds-g"); }).join("") : g("wheel", "ds-g")) + "<span>" + sc.title + "</span></h2>");
+      o.push(sc.paras.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join(""));
+      if (sc.aspects.length) o.push('<div class="list">' + sc.aspects.map(function (a) {
+        return '<details class="tr ' + a.nature + '"><summary><span class="tr-g">' + g(a.a) + g(a.key, "asp") + g(a.b) + '</span><span class="tr-t">' + esc(a.title) + "<small>" + fmt(u.chart.orb, { o: a.orb }) + "</small></span></summary><p>" + esc(a.text) + "</p></details>";
+      }).join("") + "</div>");
+      if (sc.prompts.length) o.push('<div class="think"><div class="kicker">' + u.deep.think + "</div>" + sc.prompts.map(function (p) { return promptBox(p); }).join("") + "</div>");
+      o.push("</section>");
+    });
+    return o.join("");
+  }
+  function yearFill() {
+    var box = document.getElementById("year"); if (!box) return;
+    setTimeout(function () {
+      var u = U(), natal = chartOf(S.me), y = Reading.year(natal, S.me, herePlace(), S.houses, S.lang), bt = Reading.bigTransits(natal, new Date(), S.lang), h = [];
+      h.push('<div class="row-h"><h3 class="sh">' + u.year.title + '</h3></div><p class="muted small">' + u.year.sub + "</p>");
+      if (y.prof) h.push('<article class="card yr"><div class="kicker">' + g("star") + " " + esc(y.prof.title) + '</div><p class="yr-l">' + esc(y.prof.lordTitle) + "</p><p>" + esc(y.prof.text) + "</p></article>");
+      else h.push('<p class="note">' + g("info") + " " + u.year.noTime + "</p>");
+      h.push('<article class="card yr"><div class="kicker">' + g("sun") + " " + esc(y.sr.title) + "</div><p>" + esc(y.sr.text) + '</p><p class="muted small">' + esc(y.sr.place) + ' · <a href="#/here">' + u.horary.change + "</a></p></article>");
+      h.push('<article class="card yr"><div class="kicker">' + g("moon") + " " + esc(y.prog.title) + "</div><p>" + esc(y.prog.text) + "</p></article>");
+      h.push('<h3 class="sh">' + u.year.big + "</h3>" + (bt.length ? '<div class="list">' + bt.map(function (t) {
+        return '<details class="tr ' + t.nature + '"><summary><span class="tr-g">' + g(t.t) + g(t.key, "asp") + g(t.n) + '</span><span class="tr-t">' + esc(t.title) + "<small>" + (t.win ? winShort(t.win) : "") + "</small></span></summary><p>" + esc(t.text) + "</p>" + (t.win ? winLong(t.win) : "") + "</details>";
+      }).join("") + "</div>" : '<p class="muted">' + u.year.none + "</p>"));
+      box.innerHTML = h.join("");
+    }, 40);
+  }
+  function vAskHub() {
+    var u = U().askHub, o = [header(u.title, { kicker: "" })];
+    o.push('<p class="lede-s">' + u.sub + "</p>");
+    o.push('<div class="hub">' + [["horary", "ask"], ["quiz", "spark"], ["blind", "people"], ["prompts", "journal"]].map(function (it) {
+      return '<a href="#/ask/' + it[0] + '">' + g(it[1]) + "<span><b>" + u[it[0]][0] + "</b><span>" + u[it[0]][1] + "</span></span></a>";
+    }).join("") + "</div>");
+    if (S.questions.length) o.push(horaryHistory(3));
+    return o.join("");
+  }
+  var HF = { cat: "love" };
+  function horaryStats() {
+    var done = S.questions.filter(function (q) { return q.outcome && q.positive !== null && q.positive !== undefined; });
+    var hits = done.filter(function (q) { return (q.positive && q.outcome === "yes") || (!q.positive && q.outcome === "no"); }).length;
+    return { n: done.length, h: hits };
+  }
+  function horaryHistory(max) {
+    var u = U().horary, st = horaryStats(), H = X().horary;
+    return '<section class="block"><h3 class="sh">' + u.history + "</h3>" + (S.questions.length ? '<div class="list">' + S.questions.slice(0, max || 50).map(function (q) {
+      var pos = q.positive === true ? "pos" : q.positive === false ? "neg" : "";
+      return '<a class="row" href="#/ask/h/' + q.id + '"><span class="vd ' + pos + '">' + g("ask") + '</span><span class="row-t"><b>' + esc(q.q || H.cats[q.cat].n) + "</b><span>" + esc(H.verdict[q.verdict] || "") + " · " + esc(dsh(new Date(q.at))) +
+        (q.outcome ? " · " + esc(u.track) + " " + esc(u[q.outcome]) : "") + "</span></span>" + g("fwd", "chev") + "</a>";
+    }).join("") + "</div>" : '<p class="muted">' + u.empty + "</p>") + '<p class="muted small">' + (st.n ? fmt(u.score, st) : u.scoreNone) + "</p></section>";
+  }
+  function vHoraryForm() {
+    var u = U().horary, H = X().horary, pl = herePlace(), o = [header(u.title, { back: "#/ask" })];
+    o.push('<p class="muted small">' + u.tip + "</p>");
+    o.push('<div class="kicker">' + u.cat + '</div><div class="chips cats">' + Object.keys(H.cats).map(function (k) { return '<button class="chip' + (HF.cat === k ? " on" : "") + '" data-act="h-cat" data-v="' + k + '">' + H.cats[k].n + "</button>"; }).join("") + "</div>");
+    o.push('<label class="fl"><span>' + u.q + '</span><textarea id="h-q" rows="3" maxlength="240" placeholder="' + esc(u.ph) + '"></textarea></label>');
+    o.push('<p class="where">' + g("star") + " " + u.where + ": <b>" + esc(Places.label(pl, S.lang)) + '</b> <a href="#/here">' + u.change + "</a></p>");
+    o.push('<button class="btn primary wide" data-act="h-go">' + g("ask") + " " + u.go + "</button>");
+    o.push('<p class="fine">' + H.disclaimer + "</p>");
+    o.push(horaryHistory());
+    return o.join("");
+  }
+  function vHorary(id) {
+    var u = U().horary, H = X().horary, q = S.questions.filter(function (x) { return x.id === id; })[0];
+    if (!q) return vHoraryForm();
+    var res = Reading.horary(new Date(q.at), q.place, q.cat, S.lang), o = [header(u.title, { back: "#/ask/horary" })];
+    o.push('<p class="kicker">' + esc(H.cats[q.cat].n) + " · " + esc(fmt(u.asked, { date: dfmt(new Date(q.at), { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }), place: Places.label(q.place, S.lang) })) + "</p>");
+    if (q.q) o.push('<p class="qtext">«' + esc(q.q) + "»</p>");
+    o.push('<div class="kicker">' + u.result + '</div><h2 class="verdict ' + (res.positive === true ? "pos" : res.positive === false ? "neg" : "") + '">' + esc(res.verdictText) + "</h2>");
+    if (res.timing && res.positive) o.push('<p class="muted">' + esc(fmt(H.timing, { date: Reading.dlong(res.timing, S.lang) })) + "</p>");
+    o.push('<section class="block"><h3 class="sh">' + u.why + '</h3><ul class="why">' + res.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></section>");
+    o.push('<section class="block"><h3 class="sh">' + u.chart + '</h3><div class="wheel-wrap small static">' + Wheel.svg(res.chart, { names: names() }) + "</div></section>");
+    o.push('<section class="card"><div class="kicker">' + u.track + '</div><div class="seg outcome">' + ["yes", "no", "pending"].map(function (k) {
+      return '<button class="' + ((q.outcome || "pending") === k ? "on" : "") + '" data-act="h-outcome" data-id="' + q.id + '" data-v="' + k + '">' + u[k] + "</button>";
+    }).join("") + '</div><p class="muted small">' + (horaryStats().n ? fmt(u.score, horaryStats()) : u.scoreNone) + "</p></section>");
+    o.push('<p class="fine">' + H.disclaimer + "</p>");
+    o.push('<button class="btn ghost danger" data-act="h-del" data-id="' + q.id + '">' + u.del + "</button>");
+    return o.join("");
+  }
+  var QZ = null;
+  function vQuiz() {
+    var u = U().quizUI, o = [header(u.title, { back: "#/ask" })];
+    if (!QZ) {
+      o.push('<section class="card center qz-intro">' + g("spark", "big-g") + '<p class="lede-s">' + U().askHub.quiz[1] + "</p>" + (S.quizBest ? '<p class="muted small">' + fmt(u.best, { b: S.quizBest, n: 8 }) + "</p>" : "") +
+        '<button class="btn primary wide" data-act="quiz-start">' + u.start + "</button></section>");
+      return o.join("");
+    }
+    if (QZ.i >= QZ.qs.length) {
+      var n = QZ.qs.length, msg = u.msgs[QZ.score >= n - 1 ? 2 : QZ.score >= n / 2 ? 1 : 0];
+      o.push('<section class="card center"><div class="score-big">' + fmt(u.result, { s: QZ.score, n: n }) + '</div><p class="lede-s">' + msg + '</p><p class="muted small">' + fmt(u.best, { b: S.quizBest, n: n }) + "</p>" +
+        '<button class="btn primary wide" data-act="quiz-start">' + u.again + '</button><a class="btn ghost wide" href="#/chart">' + U().chart.title + "</a></section>");
+      return o.join("");
+    }
+    var q = QZ.qs[QZ.i], done = QZ.picked != null;
+    o.push('<div class="kicker">' + fmt(u.q, { i: QZ.i + 1, n: QZ.qs.length }) + '</div><div class="prog"><i style="width:' + Math.round(QZ.i / QZ.qs.length * 100) + '%"></i></div>');
+    o.push('<h2 class="quiz-q">' + esc(q.q) + '</h2><div class="opts">' + q.opts.map(function (t, i) {
+      var cls = done ? (i === q.right ? " right" : i === QZ.picked ? " wrong" : " dim") : "";
+      return '<button class="opt' + cls + '" data-act="quiz-pick" data-v="' + i + '"' + (done ? " disabled" : "") + ">" + esc(t) + "</button>";
+    }).join("") + "</div>");
+    if (done) o.push('<p class="fb ' + (QZ.picked === q.right ? "ok" : "no") + '"><b>' + (QZ.picked === q.right ? u.right : u.wrong) + "</b> " + esc(q.ex) + '</p><button class="btn primary wide" data-act="quiz-next">' + (QZ.i + 1 < QZ.qs.length ? u.next : u.finish) + "</button>");
+    return o.join("");
+  }
+  var BL = null;
+  function vBlind() {
+    var u = U().blindUI, o = [header(u.title, { back: "#/ask" })];
+    function hist() {
+      return S.blindRuns.length ? '<section class="block"><h3 class="sh">' + u.history + '</h3><div class="list">' + S.blindRuns.slice(0, 8).map(function (r) {
+        return '<div class="row"><span class="jr-n">' + r.h + '</span><span class="row-t"><b>' + r.h + " / " + r.n + "</b><span>" + esc(dsh(new Date(r.at))) + "</span></span></div>";
+      }).join("") + "</div></section>" : "";
+    }
+    if (!BL) { o.push('<section class="card"><p>' + u.intro + '</p><button class="btn primary wide" data-act="blind-start">' + u.start + '</button><p class="fine">' + u.fine + "</p></section>" + hist()); return o.join(""); }
+    if (BL.i >= BL.rounds.length) {
+      var n = BL.rounds.length, e = (n / 3).toFixed(1).replace(".", S.lang === "es" ? "," : "."), pv = Reading.binomTail(n, BL.hits, 1 / 3);
+      o.push('<section class="card center"><div class="score-big">' + BL.hits + " / " + n + '</div><p class="lede-s">' + fmt(u.result, { h: BL.hits, n: n, e: e }) + '</p><p class="muted small">' + fmt(u.p, { p: pv.toFixed(2).replace(".", S.lang === "es" ? "," : ".") }) + "</p>" +
+        '<button class="btn primary wide" data-act="blind-start">' + u.again + "</button></section>" + hist());
+      return o.join("");
+    }
+    var rd = BL.rounds[BL.i], done = BL.picked != null, x = X();
+    o.push('<div class="kicker">' + fmt(u.round, { i: BL.i + 1, n: BL.rounds.length, P: x.planets[rd.key].n }) + '</div><div class="prog"><i style="width:' + Math.round(BL.i / BL.rounds.length * 100) + '%"></i></div>');
+    o.push('<div class="bopts">' + rd.opts.map(function (op, i) {
+      var cls = done ? (op.sign === rd.sign ? " right" : i === BL.picked ? " wrong" : " dim") : "";
+      return '<div class="bopt' + cls + '"><span class="bl">' + "ABC".charAt(i) + "</span><p>" + esc(op.text) + "</p>" + (done ? (op.sign === rd.sign || i === BL.picked ? '<small class="muted">' + g(Sky.SIGN_KEYS[op.sign], "sg") + x.signs[op.sign].n + "</small>" : "") : '<button class="btn ghost small" data-act="blind-pick" data-v="' + i + '">' + u.pick + "</button>") + "</div>";
+    }).join("") + "</div>");
+    if (done) {
+      var mine = rd.opts[BL.picked].sign === rd.sign;
+      o.push('<p class="fb ' + (mine ? "ok" : "no") + '">' + esc(mine ? fmt(u.reveal, { P: x.planets[rd.key].n, S: x.signs[rd.sign].n }) : fmt(u.missed, { S: x.signs[rd.opts[BL.picked].sign].n, P: x.planets[rd.key].n, S2: x.signs[rd.sign].n })) + "</p>" +
+        '<button class="btn primary wide" data-act="blind-next">' + (BL.i + 1 < BL.rounds.length ? U().quizUI.next : U().quizUI.finish) + "</button>");
+    }
+    return o.join("");
+  }
+  function vPrompts() {
+    var u = U().promptsUI, x = X(), c = chartOf(S.me), D = Reading.daily(c, new Date(), S.lang), o = [header(u.title, { back: "#/ask" })];
+    o.push('<h3 class="sh">' + u.today + "</h3>" + promptBox(D.prompt));
+    o.push('<h3 class="sh">' + u.chart + "</h3>");
+    ["sun", "moon", "asc", "mercury", "venus", "mars", "jupiter", "saturn", "mc", "chiron", "node"].forEach(function (k) {
+      if (!c.points[k] || !x.prompts.natal[k]) return;
+      o.push('<div class="pk">' + g(k) + " " + esc(Reading.point(c, k, S.lang).title) + "</div>" + x.prompts.natal[k].map(function (q, i) { return promptBox({ id: "natal-" + k + "-" + i, q: q }); }).join(""));
+    });
+    var keys = Object.keys(S.answers).sort(function (a, b) { return S.answers[b].at - S.answers[a].at; });
+    o.push('<h3 class="sh">' + u.saved + "</h3>" + (keys.length ? '<div class="list">' + keys.slice(0, 40).map(function (k) {
+      var a = S.answers[k]; return '<div class="row ans"><span class="row-t"><b>' + esc(a.q) + "</b><span>" + esc(a.a) + "</span></span></div>";
+    }).join("") + "</div>" : '<p class="muted">' + u.empty + "</p>"));
+    return o.join("");
+  }
+  function vHere() {
+    var u = U().here, f = U().form, o = [header(u.title, { back: "#/settings" })];
+    o.push('<p class="muted small">' + u.note + "</p>");
+    o.push('<p class="where">' + g("star") + " <b>" + esc(S.here ? Places.label(S.here, S.lang) : Places.label(S.me.place, S.lang)) + "</b>" + (S.here ? ' <button class="mini" data-act="here-clear">✕</button>' : " · " + u.birthDefault) + "</p>");
+    o.push('<button class="btn primary wide" data-act="geo">' + g("today") + " " + u.use + "</button>");
+    o.push('<div class="fl"><span>' + u.search + '</span><div id="place-chosen"></div><div id="place-pick"><input id="place-q" placeholder="' + esc(f.placePh) + '" autocomplete="off" autocapitalize="words" spellcheck="false"><div class="sugg" id="sugg"></div></div></div>');
+    return o.join("");
+  }
+
   /* ---------- settings & about ---------- */
   function vSettings() {
     var u = U(), s = u.settings, o = [header(s.title, { back: S.me ? "#/today" : "#/welcome", right: "" })];
     function seg(act, val, opts) { return '<div class="seg">' + opts.map(function (x) { return '<button class="' + (val === x[0] ? "on" : "") + '" data-act="' + act + '" data-v="' + x[0] + '">' + x[1] + "</button>"; }).join("") + "</div>"; }
     o.push('<section class="card set"><div class="kicker">' + s.lang + "</div>" + seg("lang", S.lang, [["es", "Español"], ["en", "English"]]) +
       '<div class="kicker">' + s.theme + "</div>" + seg("theme", S.theme, [["auto", s.themes.auto], ["dark", s.themes.dark], ["light", s.themes.light]]) +
-      '<div class="kicker">' + s.houses + "</div>" + seg("houses", S.houses, [["placidus", "Placidus"], ["whole", u.chart.system.whole]]) +
+      '<div class="kicker">' + s.houses + "</div>" + seg("houses", S.houses, [["placidus", "Placidus"], ["koch", "Koch"], ["regio", "Regiomontanus"], ["equal", u.chart.system.equal], ["whole", u.chart.system.whole]]) +
       '<label class="switch"><input type="checkbox" data-act="blind"' + (S.blind ? " checked" : "") + "><span><b>" + s.blind + "</b><small>" + s.blindHint + "</small></span></label></section>");
     if (S.me) o.push('<a class="row card-row" href="#/setup">' + g("star", "rg") + '<span class="row-t"><b>' + s.me + "</b><span>" + esc(fmtBirthDate(S.me) + " · " + Places.label(S.me.place, S.lang)) + "</span></span>" + g("fwd", "chev") + "</a>");
+    o.push('<a class="row card-row" href="#/here">' + g("star", "rg") + '<span class="row-t"><b>' + u2().here.title + "</b><span>" + esc(S.here ? Places.label(S.here, S.lang) : u2().here.birthDefault) + "</span></span>" + g("fwd", "chev") + "</a>");
     o.push('<a class="row card-row" href="#/about">' + g("info", "rg") + '<span class="row-t"><b>' + s.about + "</b></span>" + g("fwd", "chev") + "</a>");
     o.push('<section class="card set"><div class="kicker">' + s.backup + '</div><div class="two-b"><button class="btn ghost" data-act="export">' + s.export + '</button><label class="btn ghost">' + s.import + '<input type="file" accept="application/json,.json" id="imp" hidden></label></div>' +
       '<button class="btn ghost danger" data-act="erase">' + s.erase + "</button></section>");
@@ -548,7 +740,7 @@
   function applyTheme() { if (S.theme === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", S.theme); }
   document.addEventListener("click", function (ev) {
     var wp = ev.target.closest(".wheel .wp");
-    if (wp && !ev.target.closest(".welcome")) {
+    if (wp && !ev.target.closest(".welcome, .static")) {
       var m = location.hash.match(/^#\/people\/([^/]+)$/);
       location.hash = "#/chart/" + wp.dataset.pt + (m ? "/" + m[1] : ""); return;
     }
@@ -579,7 +771,7 @@
     }
     if (act === "cal-f") { calFilter = v; document.querySelectorAll(".filt .chip").forEach(function (b) { b.classList.toggle("on", b === el); }); calFill(); return; }
     if (act === "del-person") { var p = person(el.dataset.id); if (p && confirm(fmt(U().people.confirmDelete, { name: p.name }))) { S.people.splice(S.people.indexOf(p), 1); save(); location.hash = "#/people"; } return; }
-    if (act === "place-pick") { F.place = suggest.list[+el.dataset.i]; syncCoords(); showPlace(); preview(); return; }
+    if (act === "place-pick") { F.place = suggest.list[+el.dataset.i]; if (F.mode === "here") { S.here = F.place; save(); toast(u2().deep.saved); render(); return; } syncCoords(); showPlace(); preview(); return; }
     if (act === "place-change") { F.place = null; showPlace(); var qi = document.getElementById("place-q"); if (qi) { qi.value = ""; qi.focus(); } suggest([], ""); return; }
     if (act === "place-online") {
       var q = document.getElementById("place-q").value.trim(), fu = U().form;
@@ -587,6 +779,43 @@
       Places.online(q, S.lang).then(function (list) { suggest(list, "", list.length ? "" : fu.noResults); }).catch(function () { suggest(Places.search(q, S.lang), q, fu.offline); });
       return;
     }
+    if (act === "save-answer") {
+      var ta = document.querySelector('textarea[data-pid="' + el.dataset.id + '"]'), txt = ta ? ta.value.trim().slice(0, 1200) : "";
+      if (txt) S.answers[el.dataset.id] = { q: el.dataset.q, a: txt, at: Date.now() }; else delete S.answers[el.dataset.id];
+      save(); toast(u2().deep.saved); return;
+    }
+    if (act === "toc") { var sec = document.getElementById("deep-" + v); if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (act === "h-cat") { HF.cat = v; document.querySelectorAll(".cats .chip").forEach(function (b) { b.classList.toggle("on", b === el); }); return; }
+    if (act === "h-go") {
+      var qtxt = (document.getElementById("h-q").value || "").trim().slice(0, 240), pl = herePlace(), now = new Date();
+      var res = Reading.horary(now, pl, HF.cat, S.lang), id = uid();
+      S.questions.unshift({ id: id, q: qtxt, cat: HF.cat, at: now.getTime(), place: { name: pl.name, region: pl.region || "", cc: pl.cc || "", lat: pl.lat, lng: pl.lng, tz: pl.tz }, verdict: res.verdict, positive: res.positive, outcome: null });
+      save(); location.hash = "#/ask/h/" + id; return;
+    }
+    if (act === "h-outcome") { var hq = S.questions.filter(function (q) { return q.id === el.dataset.id; })[0]; if (hq) { hq.outcome = v === "pending" ? null : v; save(); render(); } return; }
+    if (act === "h-del") { S.questions = S.questions.filter(function (q) { return q.id !== el.dataset.id; }); save(); location.hash = "#/ask/horary"; return; }
+    if (act === "quiz-start") { QZ = { qs: Reading.quiz(chartOf(S.me), S.lang), i: 0, score: 0, picked: null }; render(); return; }
+    if (act === "quiz-pick") { if (QZ && QZ.picked == null) { QZ.picked = +v; if (QZ.picked === QZ.qs[QZ.i].right) QZ.score++; render(); } return; }
+    if (act === "quiz-next") { if (QZ) { QZ.i++; QZ.picked = null; if (QZ.i >= QZ.qs.length && QZ.score > S.quizBest) { S.quizBest = QZ.score; save(); } render(); window.scrollTo(0, 0); } return; }
+    if (act === "blind-start") { BL = { rounds: Reading.blindRounds(chartOf(S.me), S.lang), i: 0, hits: 0, picked: null }; render(); return; }
+    if (act === "blind-pick") {
+      if (BL && BL.picked == null) { BL.picked = +v; var rd = BL.rounds[BL.i]; if (rd.opts[BL.picked].sign === rd.sign) BL.hits++; render(); }
+      return;
+    }
+    if (act === "blind-next") {
+      if (BL) { BL.i++; BL.picked = null; if (BL.i >= BL.rounds.length) { S.blindRuns.unshift({ at: Date.now(), n: BL.rounds.length, h: BL.hits }); S.blindRuns = S.blindRuns.slice(0, 20); save(); } render(); window.scrollTo(0, 0); }
+      return;
+    }
+    if (act === "geo") {
+      if (!navigator.geolocation) { toast(u2().here.denied); return; }
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var tz = "UTC"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch (e) { }
+        S.here = { name: u2().here.current, region: "", cc: "", lat: +pos.coords.latitude.toFixed(4), lng: +pos.coords.longitude.toFixed(4), tz: tz };
+        save(); render();
+      }, function () { toast(u2().here.denied); }, { timeout: 12000, maximumAge: 600000 });
+      return;
+    }
+    if (act === "here-clear") { S.here = null; save(); render(); return; }
     if (act === "export") {
       var blob = new Blob([JSON.stringify({ app: "cielo", exported: new Date().toISOString(), data: S }, null, 1)], { type: "application/json" });
       var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "cielo-" + dkey(new Date()) + ".json"; document.body.appendChild(a); a.click();

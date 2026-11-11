@@ -4,7 +4,7 @@
   function n360(x) { x %= 360; return x < 0 ? x + 360 : x; }
   function r2(n) { return Math.round(n * 100) / 100; }
   function pt(r, a) { return [r2(200 + r * Math.cos(a * D2R)), r2(200 - r * Math.sin(a * D2R))]; }
-  var BODIES = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto", "node"];
+  var BODIES = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto", "node", "chiron", "lilith"];
   var SIGNS = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"];
 
   // Spread glyphs so none overlap while keeping their order around the circle.
@@ -66,7 +66,7 @@
     var on = {};
     (opts.aspects !== false ? chart.aspects || [] : []).forEach(function (x) {
       if (x.key === "conj") return;
-      if (!P[x.a] || !P[x.b] || x.a === "node" || x.b === "node") return;
+      if (!P[x.a] || !P[x.b] || x.a === "node" || x.b === "node" || x.a === "lilith" || x.b === "lilith" || x.a === "fortune" || x.b === "fortune") return;
       var a = pt(92, ang(P[x.a].lon)), b = pt(92, ang(P[x.b].lon));
       var cls = x.key === "trine" || x.key === "sextile" ? "w-flow" : x.key === "quincunx" ? "w-minor" : "w-tense";
       var op = r2(0.35 + 0.6 * (1 - x.orb / x.max));
@@ -75,7 +75,7 @@
     });
     // planets
     var items = BODIES.filter(function (k) { return P[k]; }).map(function (k) { return { key: k, lon: P[k].lon }; });
-    spread(items, 9.5).forEach(function (x) {
+    spread(items, items.length > 12 ? 8.6 : 9.5).forEach(function (x) {
       var real = ang(x.lon), shown = ang(x.dl), m0 = pt(166, real), m1 = pt(160, real), gp = pt(146, shown), dp = pt(126, shown), dot = pt(92, real);
       var deg = Math.floor(n360(x.lon) % 30);
       o.push('<g class="wp" data-pt="' + x.key + '" tabindex="0" role="button" aria-label="' + (opts.names ? opts.names[x.key] : x.key) + '">');

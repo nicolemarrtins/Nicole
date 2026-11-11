@@ -5,9 +5,9 @@
    into UTC with the IANA time-zone database built into the browser (Intl), including historical DST.
    Works in the browser (window.Sky) and in Node (module.exports) so it can be tested. */
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./vendor/astronomy.browser.min.js"));
-  else root.Sky = factory(root.Astronomy);
-})(typeof self !== "undefined" ? self : this, function (A) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./vendor/astronomy.browser.min.js"), require("./chiron-data.js"));
+  else root.Sky = factory(root.Astronomy, root.CHIRON_DATA);
+})(typeof self !== "undefined" ? self : this, function (A, CH) {
   "use strict";
   var D2R = Math.PI / 180, R2D = 180 / Math.PI;
   function norm(x) { x = x % 360; return x < 0 ? x + 360 : x; }
@@ -24,7 +24,38 @@
   function lon(key, date) {
     var t = T(date);
     if (key === "node") return trueNode(t);
+    if (key === "lilith") return meanLilith(t);
+    if (key === "chiron") { var v = chironVec(t); return v ? norm(A.Ecliptic(v).elon) : NaN; }
     return norm(A.Ecliptic(A.GeoVector(BODY[key], t, true)).elon);
+  }
+  // Chiron: NASA/JPL Horizons heliocentric vectors (60-day steps) with 4-point Lagrange interpolation, then the same
+  // light-time and aberration treatment astronomy-engine applies to the planets (Earth back-dated by the light time).
+  var C_AUDAY = 173.1446326846693;
+  function chironHelio(jd) {
+    if (!CH) return null;
+    var f = (jd - CH.jd0) / CH.step, i = Math.floor(f) - 1;
+    if (i < 0 || i + 3 >= CH.x.length) return null;
+    var u = f - (i + 1), w = [-u * (u - 1) * (u - 2) / 6, (u + 1) * (u - 1) * (u - 2) / 2, -(u + 1) * u * (u - 2) / 2, (u + 1) * u * (u - 1) / 6];
+    function at(a) { return w[0] * a[i] + w[1] * a[i + 1] + w[2] * a[i + 2] + w[3] * a[i + 3]; }
+    return [at(CH.x), at(CH.y), at(CH.z)];
+  }
+  function chironVec(t) {
+    var lt = t, geo = null;
+    for (var k = 0; k < 8; k++) {
+      var h = chironHelio(2451545.0 + lt.tt); if (!h) return null;
+      var e = A.HelioVector(A.Body.Earth, lt);
+      geo = new A.Vector(h[0] - e.x, h[1] - e.y, h[2] - e.z, t);
+      var lt2 = t.AddDays(-geo.Length() / C_AUDAY), done = Math.abs(lt2.tt - lt.tt) < 1e-9;
+      lt = lt2; if (done) break;
+    }
+    return geo;
+  }
+  // Black Moon Lilith (mean lunar apogee) = Moon's mean longitude − mean anomaly + 180° (Meeus, ch. 47).
+  function meanLilith(date) {
+    var c = T(date).tt / 36525, c2 = c * c, c3 = c2 * c, c4 = c3 * c;
+    var Lp = 218.3164477 + 481267.88123421 * c - 0.0015786 * c2 + c3 / 538841 - c4 / 65194000;
+    var Mp = 134.9633964 + 477198.8675055 * c + 0.0087414 * c2 + c3 / 69699 - c4 / 14712000;
+    return norm(Lp - Mp + 180);
   }
   function lonLat(key, date) {
     var e = A.Ecliptic(A.GeoVector(BODY[key], T(date), true));
@@ -87,10 +118,25 @@
     for (var i = 0; i < 12; i++) c.push(norm(s + 30 * i));
     return c;
   }
+  function ascAt(ramc, eps, phi) { var r = ramc * D2R; return norm(Math.atan2(Math.cos(r), -(Math.sin(r) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps))) * R2D); }
+  function frame(a, c11, c12, c2, c3) { return [a.asc, c2, c3, norm(a.mc + 180), norm(c11 + 180), norm(c12 + 180), norm(a.asc + 180), norm(c2 + 180), norm(c3 + 180), a.mc, c11, c12]; }
+  function koch(a) { // trisects the diurnal semi-arc of the MC degree (cusps = Ascendants at shifted sidereal times)
+    var phi = a.lat * D2R, dec = Math.asin(Math.sin(a.eps) * Math.sin(a.mc * D2R)), x = Math.tan(phi) * Math.tan(dec);
+    if (Math.abs(x) >= 1) return null;
+    var D = 90 + Math.asin(x) * R2D;
+    return frame(a, ascAt(a.ramc - 2 * D / 3, a.eps, phi), ascAt(a.ramc - D / 3, a.eps, phi), ascAt(a.ramc + D / 3, a.eps, phi), ascAt(a.ramc + 2 * D / 3, a.eps, phi));
+  }
+  function regio(a) { // Regiomontanus: equal 30° divisions of the equator, projected through the horizon's north and south points
+    var phi = a.lat * D2R;
+    function cusp(H) { var P = Math.atan(Math.tan(phi) * Math.sin(H * D2R)), r = (a.ramc + H) * D2R; return norm(Math.atan2(Math.sin(r), Math.cos(r) * Math.cos(a.eps) - Math.tan(P) * Math.sin(a.eps)) * R2D); }
+    return frame(a, cusp(30), cusp(60), cusp(120), cusp(150));
+  }
+  function equalHouses(a) { var c = []; for (var i = 0; i < 12; i++) c.push(norm(a.asc + 30 * i)); return c; }
   function houses(a, system) {
     if (system === "whole") return { system: "whole", cusps: wholeSign(a) };
-    var p = placidus(a);
-    if (p && validCusps(p)) return { system: "placidus", cusps: p };
+    if (system === "equal") return { system: "equal", cusps: equalHouses(a) };
+    var p = system === "koch" ? koch(a) : system === "regio" ? regio(a) : placidus(a);
+    if (p && validCusps(p)) return { system: system === "koch" || system === "regio" ? system : "placidus", cusps: p };
     return { system: "porphyry", cusps: porphyry(a), fallback: true };
   }
   function validCusps(c) { // each house must be a positive arc and together they must close the circle
@@ -153,7 +199,9 @@
   var ASPECT = {}; ASPECTS.forEach(function (x) { ASPECT[x.key] = x; });
   function natalOrb(asp, a, b) {
     var lum = a === "sun" || a === "moon" || b === "sun" || b === "moon";
-    var pt = a === "asc" || a === "mc" || a === "node" || b === "asc" || b === "mc" || b === "node";
+    if (a === "lilith" || b === "lilith") return asp.key === "conj" || asp.key === "opp" ? 3 : 0;
+    if (a === "fortune" || b === "fortune") return 0;
+    var pt = a === "asc" || a === "mc" || a === "node" || a === "chiron" || b === "asc" || b === "mc" || b === "node" || b === "chiron";
     var o = asp.orb + (lum ? (asp.key === "quincunx" ? 0 : asp.key === "sextile" ? 1 : 2) : 0);
     if (pt) o = Math.min(o, asp.key === "sextile" ? 3 : asp.key === "quincunx" ? 0 : 5);
     return o;
@@ -191,30 +239,45 @@
     var pts = {};
     PLANETS.forEach(function (k) { var v = speed(k, t); pts[k] = { lon: lon(k, t), speed: v, retro: v < 0 && k !== "sun" && k !== "moon" }; });
     var n = trueNode(t); pts.node = { lon: n, speed: diff(trueNode(t.AddDays(0.5)), trueNode(t.AddDays(-0.5))) };
+    var ch = lon("chiron", t);
+    if (!isNaN(ch)) { var cv = diff(lon("chiron", t.AddDays(0.5)), lon("chiron", t.AddDays(-0.5))); pts.chiron = { lon: ch, speed: cv, retro: cv < 0 }; }
+    pts.lilith = { lon: meanLilith(t), speed: 0.1114 };
     return pts;
+  }
+  var NATAL_KEYS = PLANETS.concat(["node", "chiron", "lilith"]);
+  // Any moment and place, already in UTC: used for birth charts, horary questions and solar returns.
+  function castAt(date, lat, lng, opts) {
+    opts = opts || {};
+    var t = T(date), pts = positions(t), a = angles(t, lat, lng), h = houses(a, opts.houseSystem || "placidus");
+    pts.asc = { lon: a.asc, speed: 0 }; pts.mc = { lon: a.mc, speed: 0 };
+    var day = norm(pts.sun.lon - a.asc) >= 180; // the Sun is above the horizon
+    pts.fortune = { lon: norm(a.asc + (day ? pts.moon.lon - pts.sun.lon : pts.sun.lon - pts.moon.lon)), speed: 0 };
+    NATAL_KEYS.concat(["fortune"]).forEach(function (k) { if (pts[k]) pts[k].house = houseOf(pts[k].lon, h.cusps); });
+    var c = { utc: t.date.getTime(), timeKnown: true, points: pts, lat: lat, lng: lng, cusps: h.cusps, houseSystem: h.system, houseFallback: !!h.fallback, day: day, ramc: a.ramc };
+    c.aspects = natalAspects(pts, NATAL_KEYS.concat(["asc", "mc"]).filter(function (k) { return pts[k]; }));
+    return c;
   }
   /* birth = { y, m, d, h, min, timeKnown, lat, lng, tz, manualOffsetMin }  opts = { houseSystem } */
   function chart(birth, opts) {
     opts = opts || {};
     var known = birth.timeKnown !== false;
     var conv = localToUTC(birth.y, birth.m, birth.d, known ? birth.h : 12, known ? birth.min : 0, birth.tz, birth.manualOffsetMin);
-    var t = A.MakeTime(new Date(conv.utc));
-    var pts = positions(t);
-    var c = { utc: conv.utc, offset: conv.offset, tzStatus: conv.status, timeKnown: known, points: pts, lat: birth.lat, lng: birth.lng };
+    var t = A.MakeTime(new Date(conv.utc)), c;
     if (known) {
-      var a = angles(t, birth.lat, birth.lng), h = houses(a, opts.houseSystem || "placidus");
-      pts.asc = { lon: a.asc, speed: 0 }; pts.mc = { lon: a.mc, speed: 0 };
-      c.cusps = h.cusps; c.houseSystem = h.system; c.houseFallback = !!h.fallback;
-      PLANETS.concat(["node"]).forEach(function (k) { pts[k].house = houseOf(pts[k].lon, h.cusps); });
-    } else {
+      c = castAt(t, birth.lat, birth.lng, opts);
+      c.offset = conv.offset; c.tzStatus = conv.status;
+      return c;
+    }
+    var pts = positions(t);
+    c = { utc: conv.utc, offset: conv.offset, tzStatus: conv.status, timeKnown: false, points: pts, lat: birth.lat, lng: birth.lng };
+    {
       // Without a birth time the Moon can be anywhere in a ~13° arc: report both ends of the day.
       var d0 = localToUTC(birth.y, birth.m, birth.d, 0, 0, birth.tz, birth.manualOffsetMin).utc;
       var m0 = lon("moon", new Date(d0)), m1 = lon("moon", new Date(d0 + 86399000));
       c.moonRange = [m0, m1];
       c.moonSignUncertain = signOf(m0) !== signOf(m1);
     }
-    var keys = PLANETS.concat(["node"]).concat(known ? ["asc", "mc"] : []);
-    c.aspects = natalAspects(pts, keys);
+    c.aspects = natalAspects(pts, NATAL_KEYS.filter(function (k) { return pts[k]; }));
     return c;
   }
 
@@ -272,6 +335,85 @@
       if (Math.abs(step) < 1e-4) break;
     }
     return off;
+  }
+
+  // The whole life of a transit: when it enters the orb, every exact pass (retrograde loops included) and when it leaves.
+  function gapTo(L, N, angle) {
+    if (angle === 0) return diff(L, N);
+    if (angle === 180) return diff(L, N + 180);
+    var a = diff(L, N + angle), b = diff(L, N - angle);
+    return Math.abs(a) < Math.abs(b) ? a : b;
+  }
+  var WIN = { moon: [1.5, 1 / 48], sun: [8, 0.25], mercury: [60, 0.25], venus: [90, 0.5], mars: [180, 0.5], jupiter: [420, 1], saturn: [520, 2], uranus: [900, 3], neptune: [900, 3], pluto: [900, 3] };
+  function transitWindow(tk, natalLon, angle, orb, date) {
+    var day = 86400000, t0 = T(date).date.getTime(), cfg = WIN[tk] || [60, 0.5], s = cfg[1] * day, maxN = Math.ceil(cfg[0] / cfg[1]);
+    function g(ms) { return gapTo(lon(tk, new Date(ms)), natalLon, angle); }
+    if (typeof angle !== "number" || !(Math.abs(g(t0)) <= orb)) return null;
+    function edge(inside, outside) { for (var i = 0; i < 28; i++) { var m = (inside + outside) / 2; if (Math.abs(g(m)) <= orb) inside = m; else outside = m; } return new Date((inside + outside) / 2); }
+    function zero(a, b, ga) { for (var i = 0; i < 30; i++) { var m = (a + b) / 2, gm = g(m); if ((gm < 0) === (ga < 0)) { a = m; ga = gm; } else b = m; } return new Date((a + b) / 2); }
+    var out = { start: null, end: null, exacts: [] }, x, gx, y, gy, n;
+    for (x = t0, gx = g(x), n = 0; n < maxN; n++) { y = x - s; gy = g(y); if (Math.abs(gy) > orb) { out.start = edge(x, y); break; } if ((gy < 0) !== (gx < 0)) out.exacts.push(zero(y, x, gy)); x = y; gx = gy; }
+    for (x = t0, gx = g(x), n = 0; n < maxN; n++) { y = x + s; gy = g(y); if (Math.abs(gy) > orb) { out.end = edge(x, y); break; } if ((gy < 0) !== (gx < 0)) out.exacts.push(zero(x, y, gx)); x = y; gx = gy; }
+    out.exacts.sort(function (p, q) { return p - q; });
+    return out;
+  }
+  // Secondary progressions: each day after birth stands for a year of life.
+  function progressedTime(birthUtc, date) { return A.MakeTime(new Date(birthUtc + (date.getTime() - birthUtc) / 365.2422)); }
+  function realFromProgressed(birthUtc, pDate) { return new Date(birthUtc + (pDate.getTime() - birthUtc) * 365.2422); }
+  function progressedMoon(birthUtc, date) {
+    var pt = progressedTime(birthUtc, date), l = lon("moon", pt), nx = nextIngress("moon", pt, 3);
+    return { lon: l, sign: signOf(l), next: nx ? { sign: nx.sign, date: realFromProgressed(birthUtc, nx.date) } : null, sunLon: lon("sun", pt) };
+  }
+  // The moment the Sun returns to its natal longitude in a given year.
+  function solarReturn(natalSun, year, month, day) {
+    var t = A.MakeTime(new Date(Date.UTC(year, month - 1, day, 12)));
+    for (var i = 0; i < 12; i++) {
+      var d = diff(natalSun, lon("sun", t)); if (Math.abs(d) < 1e-8) break;
+      t = t.AddDays(d / speed("sun", t));
+    }
+    return t.date;
+  }
+  // First exact major aspect between two bodies after `date` (signed separation crossing each target angle).
+  var TARGETS = [0, 60, -60, 90, -90, 120, -120, 180];
+  function nextAspect(k1, k2, date, maxDays) {
+    var day = 86400000, t0 = T(date).date.getTime(), moon = k1 === "moon" || k2 === "moon";
+    var step = (moon ? 0.04 : (k1 === "mercury" || k2 === "mercury" || k1 === "venus" || k2 === "venus" || k1 === "sun" || k2 === "sun" || k1 === "mars" || k2 === "mars") ? 0.25 : 1) * day;
+    function d(ms) { return diff(lon(k1, new Date(ms)), lon(k2, new Date(ms))); }
+    var prev = d(t0);
+    for (var x = t0 + step; x <= t0 + maxDays * day; x += step) {
+      var cur = d(x);
+      for (var i = 0; i < TARGETS.length; i++) {
+        var tg = TARGETS[i], fa = diff(prev, tg), fb = diff(cur, tg);
+        if (Math.abs(fa) < 30 && Math.abs(fb) < 30 && (fa === 0 || (fa < 0) !== (fb < 0))) {
+          var a = x - step, b = x;
+          for (var j = 0; j < 32; j++) { var m = (a + b) / 2, fm = diff(d(m), tg); if ((fm < 0) === (fa < 0) && fm !== 0) a = m; else b = m; }
+          return { angle: Math.abs(tg), date: new Date((a + b) / 2) };
+        }
+      }
+      prev = cur;
+    }
+    return null;
+  }
+  function lastAspect(k1, k2, date, maxDays) { // most recent exact major aspect before `date`
+    var day = 86400000, t0 = T(date).date.getTime(), step = 0.04 * day;
+    function d(ms) { return diff(lon(k1, new Date(ms)), lon(k2, new Date(ms))); }
+    var prev = d(t0);
+    for (var x = t0 - step; x >= t0 - maxDays * day; x -= step) {
+      var cur = d(x);
+      for (var i = 0; i < TARGETS.length; i++) {
+        var tg = TARGETS[i], fa = diff(prev, tg), fb = diff(cur, tg);
+        if (Math.abs(fa) < 30 && Math.abs(fb) < 30 && (fb === 0 || (fa < 0) !== (fb < 0))) return { angle: Math.abs(tg), date: new Date(x + step / 2) };
+      }
+      prev = cur;
+    }
+    return null;
+  }
+  function lastIngress(key, date, maxDays) { // when the body entered its current sign
+    var d0 = T(date).date, s0 = signOf(lon(key, d0)), step = key === "moon" ? 7200000 : 86400000, start = d0.getTime() - (maxDays || 3) * 86400000;
+    for (var x = d0.getTime() - step; x >= start; x -= step) {
+      var d = new Date(x); if (signOf(lon(key, d)) !== s0) return bisect(function (q) { return signOf(lon(key, q)); }, d, new Date(x + step), 24);
+    }
+    return null;
   }
 
   /* ---------- the Moon ---------- */
@@ -396,7 +538,9 @@
     offsetSec: offsetSec, localToUTC: localToUTC, fmtOffset: fmtOffset, validTz: validTz,
     chart: chart, natalAspects: natalAspects, transits: transits, dayScore: dayScore, exactIn: exactIn,
     moonInfo: moonInfo, voidOfCourse: voidOfCourse, lunations: lunations, eclipses: eclipses,
-    stationsAndIngresses: stationsAndIngresses, retroPeriods: retroPeriods, nextIngress: nextIngress, balance: balance, synastry: synastry,
+    stationsAndIngresses: stationsAndIngresses, retroPeriods: retroPeriods, nextIngress: nextIngress, lastIngress: lastIngress, balance: balance, synastry: synastry,
+    castAt: castAt, transitWindow: transitWindow, gapTo: gapTo, progressedMoon: progressedMoon, solarReturn: solarReturn, nextAspect: nextAspect, lastAspect: lastAspect,
+    meanLilith: meanLilith, NATAL_KEYS: NATAL_KEYS,
     findAspect: findAspect
   };
 });

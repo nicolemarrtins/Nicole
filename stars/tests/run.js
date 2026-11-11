@@ -27,7 +27,20 @@ ref.cases.forEach((c) => {
   const p = Sky.placidus(a);
   ok(!!p, `Placidus failed at ${c.lat}`);
   if (p) p.forEach((cu, i) => { const e = arcmin(cu, c.placidus[i]); track("placidus", e); ok(e < 1, `cusp ${i + 1} ${c.utc} ${c.lat}: ${e.toFixed(2)}′`); });
+  ["koch", "regio", "equal"].forEach((sys) => {
+    const h = Sky.houses(a, sys);
+    ok(h.system === sys, `${sys} fell back at ${c.lat}`);
+    h.cusps.forEach((cu, i) => { const e = arcmin(cu, c[sys][i]); track(sys, e); ok(e < 1, `${sys} cusp ${i + 1} ${c.utc} ${c.lat}: ${e.toFixed(2)}′`); });
+  });
+  // Lilith is a theoretical point: Meeus's mean apogee and the Swiss Ephemeris model differ by a few arcminutes (orb used: 3°).
+  const li = arcmin(Sky.meanLilith(d), c.planets.lilith[0]); track("lilith", li); ok(li < 8, `Lilith ${c.utc}: ${li.toFixed(2)}′`);
 });
+const chiRef = require("./chiron-reference.json");
+chiRef.cases.forEach((c) => {
+  const d = new Date((c.jdUT - 2440587.5) * 86400000), e = arcmin(Sky.lon("chiron", d), c.lon); track("chiron", e);
+  ok(e < 1, `Chiron ${d.toISOString()}: ${e.toFixed(2)}′`);
+});
+console.log("Chiron vs NASA/JPL Horizons — " + chiRef.cases.length + " dates 1916–2030");
 console.log("Ephemeris vs " + ref.source + " — " + ref.cases.length + " random charts 1925–2035, worst error (arcminutes):");
 console.log("  " + Object.keys(worst).map((k) => k + " " + worst[k].toFixed(3)).join(" · "));
 
@@ -69,7 +82,27 @@ ok(ev.some((e) => e.type === "stationRetro" && e.body === "mercury" && within(e.
 ok(ev.some((e) => e.type === "stationDirect" && e.body === "mercury" && within(e.date, "2024-04-25T12:54:00Z", 60)), "Mercury stations direct 25 Apr 2024 ~12:54 UT");
 console.log("Events: equinox, solstice, eclipses, lunations and Mercury stations checked against published times");
 
-/* 4 — a full chart runs end to end */
+/* 4 — timing tools */
+const natal = Sky.chart({ y: 1990, m: 5, d: 12, h: 14, min: 30, lat: 10.4806, lng: -66.9036, tz: "America/Caracas" });
+const sr = Sky.solarReturn(natal.points.sun.lon, 2026, 5, 12);
+ok(arcmin(Sky.lon("sun", sr), natal.points.sun.lon) < 0.01 && Math.abs(sr - new Date("2026-05-12T12:00:00Z")) < 3 * 86400000, "solar return lands on the natal Sun");
+// Saturn conjunct a test point: the window must contain the exact passes, and each pass must really be exact
+const satNow = new Date("2025-06-01T12:00:00Z"), target = Sky.lon("saturn", satNow);
+const w = Sky.transitWindow("saturn", target, 0, 2, satNow);
+ok(w && w.start < satNow && w.end > satNow && w.exacts.length >= 1, "transit window brackets the exact pass");
+if (w) w.exacts.forEach((x) => ok(arcmin(Sky.lon("saturn", x), target) < 0.5, "exact pass is exact (" + x.toISOString().slice(0, 10) + ")"));
+if (w) ok(Math.abs(Sky.diff(Sky.lon("saturn", w.start), target)) > 1.98 && Math.abs(Sky.diff(Sky.lon("saturn", w.end), target)) > 1.98, "window edges sit on the orb");
+const sq = Sky.nextAspect("moon", "sun", new Date("2024-04-01T00:00:00Z"), 30);
+ok(sq && sq.angle === 90 && within(sq.date, "2024-04-02T03:15:00Z", 3), "next Sun–Moon aspect after 1 Apr 2024 is the last-quarter square (03:15 UT)");
+const na = Sky.nextAspect("moon", "sun", new Date("2024-04-06T12:00:00Z"), 30);
+ok(na && na.angle === 0 && within(na.date, "2024-04-08T18:21:00Z", 3), "next Sun–Moon conjunction found at the April 2024 new moon");
+const pm = Sky.progressedMoon(natal.utc, new Date("2026-11-11T12:00:00Z"));
+ok(pm && pm.next && pm.next.date > new Date("2026-11-11T12:00:00Z"), "progressed Moon and its next sign change");
+const hor = Sky.castAt(new Date("2026-11-11T15:00:00Z"), 40.4168, -3.7038, { houseSystem: "regio" });
+ok(hor.houseSystem === "regio" && hor.points.fortune && typeof hor.day === "boolean", "horary chart with Regiomontanus houses and Part of Fortune");
+console.log("Timing: solar return, transit windows with exact passes, aspect search, progressions, horary charts");
+
+/* 5 — a full chart runs end to end */
 const c = Sky.chart({ y: 1990, m: 5, d: 12, h: 14, min: 30, lat: 10.4806, lng: -66.9036, tz: "America/Caracas" });
 ok(c.cusps.length === 12 && c.points.asc && c.aspects.length > 3, "chart() returns cusps, angles and aspects");
 const u = Sky.chart({ y: 1990, m: 5, d: 12, timeKnown: false, lat: 10.4806, lng: -66.9036, tz: "America/Caracas" });

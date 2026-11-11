@@ -69,8 +69,8 @@ window.I18N = {
       blocks: [
         { h: "Precisión astronómica", p: [
           "Cielo calcula tu carta con astronomy-engine, una biblioteca de efemérides que modela el sistema solar (VSOP87 para los planetas, un modelo lunar completo e integración numérica para Plutón). Las posiciones son geocéntricas aparentes, con la corrección por tiempo de luz, la aberración, la precesión y la nutación: el mismo estándar que usan los programas profesionales de astrología.",
-          "En las pruebas automáticas de la app, comparadas con Swiss Ephemeris en 80 cartas al azar entre 1925 y 2035, los planetas difieren menos de 0,3′ (unos 18 segundos de arco), y el Ascendente, el Medio Cielo y las cúspides de Placidus menos de 0,01′. La app incluye esas pruebas, junto con equinoccios, eclipses, lunaciones y estaciones de Mercurio contrastados con las horas publicadas.",
-          "Se usa el zodiaco tropical (el occidental) y el nodo lunar verdadero. Las casas, por defecto, se calculan con Placidus; puedes cambiar a signos enteros. Por encima de unos 66° de latitud, Placidus no está definido y se usa Porphyry."
+          "En las pruebas automáticas de la app, comparadas con Swiss Ephemeris en 80 cartas al azar entre 1925 y 2035, los planetas difieren menos de 0,3′ (unos 18 segundos de arco), y el Ascendente, el Medio Cielo y las cúspides (Placidus, Koch, Regiomontanus e iguales) menos de 0,01′. Quirón se calcula con datos de la NASA (JPL Horizons) y coincide con sus efemérides en menos de 0,01′. Lilith media usa la fórmula estándar de Meeus; otros programas modelan distinto ese punto teórico y pueden diferir hasta 7′. La app incluye todas estas pruebas, junto con equinoccios, eclipses, lunaciones y estaciones de Mercurio contrastados con las horas publicadas.",
+          "Se usa el zodiaco tropical (el occidental) y el nodo lunar verdadero. Las casas se calculan por defecto con Placidus; puedes elegir Koch, Regiomontanus, casas iguales o signos enteros. Por encima de unos 66° de latitud, Placidus y Koch no están definidos y se usa Porphyry. Los tránsitos muestran su ventana completa: cuándo entran en orbe, cada paso exacto (también los retrógrados) y cuándo salen."
         ] },
         { h: "La hora importa", p: [
           "Tu hora local se convierte a hora universal con la base de datos de zonas horarias de tu dispositivo (IANA), que incluye los cambios de hora históricos de cada país. La app te muestra el desfase que usó (por ejemplo, UTC−4) para que puedas comprobarlo.",
@@ -85,12 +85,17 @@ window.I18N = {
           "Ese número se compara con tu propio año: el tercio de días más alto es «favorable» y el más bajo, «exigente». Con tus puntuaciones diarias, la app calcula una correlación de Spearman y, con un test de permutaciones, la probabilidad de ver esa relación por puro azar.",
           "Para que el experimento sea justo, deja activado el modo ciego y puntúa tu día antes de mirar su tono."
         ] },
+        { h: "Técnicas de tiempo y preguntas", p: [
+          "«Tu año» combina tres técnicas clásicas: la profección anual (cada año activa una casa, contando desde el Ascendente, y su regente es el «señor del año»), las progresiones secundarias (cada día después de tu nacimiento equivale a un año de vida) y la revolución solar (el instante exacto en que el Sol vuelve a su posición natal, calculado para el lugar donde estás).",
+          "«Pregunta al cielo» es astrología horaria, tal como la describió William Lilly en 1647: se levanta la carta del momento de la pregunta con casas Regiomontanus y se buscan los encuentros exactos entre los regentes. La app calcula esos encuentros con las efemérides reales y te deja anotar si se cumplió, para que veas tu propia tasa de aciertos.",
+          "«¿Te reconoces a ciegas?» se inspira en el estudio de Carlson: si las descripciones astrológicas funcionaran, deberías elegir la tuya más de 1 de cada 3 veces."
+        ] },
         { h: "Privacidad", p: [
           "Tus datos de nacimiento, las personas que añades y tu diario se guardan solo en este dispositivo. Cielo no tiene servidor.",
           "Solo hay dos conexiones, y ambas dependen de ti: la búsqueda de lugares en línea (envía a Open‑Meteo únicamente el nombre que escribes) y «Pregúntale a Claude», que abre claude.ai con el texto que tú decides enviar."
         ] },
         { h: "Créditos", p: [
-          "Efemérides: astronomy-engine, de Don Cross (licencia MIT). Lista de ciudades: city-timezones (licencia MIT). Búsqueda de lugares: Open‑Meteo, con datos de GeoNames (CC BY 4.0). Textos, diseño y glifos: originales de Cielo."
+          "Efemérides: astronomy-engine, de Don Cross (licencia MIT). Quirón: NASA/JPL Horizons. Lista de ciudades: city-timezones (licencia MIT). Búsqueda de lugares: Open‑Meteo, con datos de GeoNames (CC BY 4.0). Textos, diseño y glifos: originales de Cielo."
         ] }
       ]
     }
@@ -164,8 +169,8 @@ window.I18N = {
       blocks: [
         { h: "Astronomical precision", p: [
           "Cielo calculates your chart with astronomy-engine, an ephemeris library that models the solar system (VSOP87 for the planets, a full lunar theory and numerical integration for Pluto). Positions are apparent and geocentric, corrected for light time, aberration, precession and nutation — the same standard professional astrology software uses.",
-          "In the app’s automated tests, checked against the Swiss Ephemeris on 80 random charts between 1925 and 2035, planets differ by less than 0.3′ (about 18 arcseconds), and the Ascendant, Midheaven and Placidus cusps by less than 0.01′. The tests ship with the app, along with equinoxes, eclipses, lunations and Mercury stations checked against published times.",
-          "Cielo uses the tropical (Western) zodiac and the true lunar node. Houses default to Placidus; you can switch to whole signs. Above roughly 66° latitude Placidus is undefined, so Porphyry is used."
+          "In the app’s automated tests, checked against the Swiss Ephemeris on 80 random charts between 1925 and 2035, planets differ by less than 0.3′ (about 18 arcseconds), and the Ascendant, Midheaven and house cusps (Placidus, Koch, Regiomontanus and equal) by less than 0.01′. Chiron is computed from NASA data (JPL Horizons) and matches its ephemeris within 0.01′. Mean Lilith uses Meeus’s standard formula; other programs model this theoretical point differently and may differ by up to 7′. All these tests ship with the app, along with equinoxes, eclipses, lunations and Mercury stations checked against published times.",
+          "Cielo uses the tropical (Western) zodiac and the true lunar node. Houses default to Placidus; you can choose Koch, Regiomontanus, equal houses or whole signs. Above roughly 66° latitude Placidus and Koch are undefined, so Porphyry is used. Transits show their full window: when they enter orb, every exact pass (retrograde ones included) and when they leave."
         ] },
         { h: "Time matters", p: [
           "Your local time is converted to universal time with your device’s time-zone database (IANA), which includes each country’s historical clock changes. The app shows you the offset it used (for example UTC−4) so you can check it.",
@@ -180,12 +185,17 @@ window.I18N = {
           "That number is compared with your own year: the top third of days is “favourable” and the bottom third “demanding”. With your daily ratings, the app computes a Spearman correlation and, with a permutation test, the chance of seeing that relationship by pure luck.",
           "To keep the experiment fair, leave blind mode on and rate your day before looking at its tone."
         ] },
+        { h: "Timing techniques and questions", p: [
+          "“Your year” combines three classical techniques: annual profection (each year activates a house, counting from the Ascendant, whose ruler is the “lord of the year”), secondary progressions (each day after birth stands for a year of life) and the solar return (the exact moment the Sun returns to its natal position, cast for where you are).",
+          "“Ask the sky” is horary astrology as William Lilly described it in 1647: the chart of the moment of the question is cast with Regiomontanus houses and the app looks for exact meetings between the rulers, using the real ephemeris. You can log whether it came true and see your own hit rate.",
+          "“Do you recognise yourself blind?” is inspired by Carlson’s study: if astrological descriptions worked, you should pick your own more than 1 time in 3."
+        ] },
         { h: "Privacy", p: [
           "Your birth details, the people you add and your journal are stored only on this device. Cielo has no server.",
           "There are only two connections, and both are up to you: online place search (it sends Open‑Meteo only the name you type) and “Ask Claude”, which opens claude.ai with the text you choose to send."
         ] },
         { h: "Credits", p: [
-          "Ephemeris: astronomy-engine by Don Cross (MIT licence). City list: city-timezones (MIT licence). Place search: Open‑Meteo, with GeoNames data (CC BY 4.0). Texts, design and glyphs: original to Cielo."
+          "Ephemeris: astronomy-engine by Don Cross (MIT licence). Chiron: NASA/JPL Horizons. City list: city-timezones (MIT licence). Place search: Open‑Meteo, with GeoNames data (CC BY 4.0). Texts, design and glyphs: original to Cielo."
         ] }
       ]
     }
