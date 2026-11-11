@@ -87,7 +87,7 @@ window.I18N = {
         ] },
         { h: "Técnicas de tiempo y preguntas", p: [
           "«Tu año» combina tres técnicas clásicas: la profección anual (cada año activa una casa, contando desde el Ascendente, y su regente es el «señor del año»), las progresiones secundarias (cada día después de tu nacimiento equivale a un año de vida) y la revolución solar (el instante exacto en que el Sol vuelve a su posición natal, calculado para el lugar donde estás).",
-          "«Pregunta al cielo» es astrología horaria, tal como la describió William Lilly en 1647: se levanta la carta del momento de la pregunta con casas Regiomontanus y se buscan los encuentros exactos entre los regentes. La app calcula esos encuentros con las efemérides reales y te deja anotar si se cumplió, para que veas tu propia tasa de aciertos.",
+          "«Pregunta al cielo» es astrología horaria, tal como la describió William Lilly en 1647: se levanta la carta del momento de la pregunta con casas Regiomontanus y se buscan los encuentros exactos entre los regentes. La app lee el tipo de pregunta (sí o no, «cuándo», «qué siente», «¿me conviene?») y el tema, y pesa los argumentos a favor y en contra que usa la tradición: encuentros y recepciones entre significadores, dignidades, casas angulares o cadentes, retrogradación, combustión, el próximo aspecto de la Luna y los planetas en la casa de lo preguntado. Te deja anotar si se cumplió, para que veas tu propia tasa de aciertos.",
           "«¿Te reconoces a ciegas?» se inspira en el estudio de Carlson: si las descripciones astrológicas funcionaran, deberías elegir la tuya más de 1 de cada 3 veces."
         ] },
         { h: "Privacidad", p: [
@@ -187,7 +187,7 @@ window.I18N = {
         ] },
         { h: "Timing techniques and questions", p: [
           "“Your year” combines three classical techniques: annual profection (each year activates a house, counting from the Ascendant, whose ruler is the “lord of the year”), secondary progressions (each day after birth stands for a year of life) and the solar return (the exact moment the Sun returns to its natal position, cast for where you are).",
-          "“Ask the sky” is horary astrology as William Lilly described it in 1647: the chart of the moment of the question is cast with Regiomontanus houses and the app looks for exact meetings between the rulers, using the real ephemeris. You can log whether it came true and see your own hit rate.",
+          "“Ask the sky” is horary astrology as William Lilly described it in 1647: the chart of the moment of the question is cast with Regiomontanus houses and the app looks for exact meetings between the rulers, using the real ephemeris. It reads the type of question (yes or no, “when”, “what do they feel”, “should I?”) and its topic, and weighs the traditional testimonies for and against: meetings and receptions between significators, dignities, angular or cadent houses, retrogradation, combustion, the Moon’s next aspect and planets in the house of the matter. You can log whether it came true and see your own hit rate.",
           "“Do you recognise yourself blind?” is inspired by Carlson’s study: if astrological descriptions worked, you should pick your own more than 1 time in 3."
         ] },
         { h: "Privacy", p: [

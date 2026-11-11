@@ -193,7 +193,7 @@
     how: { trine: "de forma fluida", sextile: "con facilidad si das un paso", conj: "de manera directa", square: "con obstáculos y esfuerzo", opp: "con tensión o tras una negociación" },
     afterSign: "Pero el encuentro ocurre después de que uno de los dos cambie de signo: la situación tendrá otra forma cuando llegue.",
     none: "{A} y {B} no forman ningún aspecto exacto en las próximas semanas: no hay un encuentro claro.",
-    refrain: "Ojo: {P} se vuelve retrógrado antes del encuentro; alguien podría echarse atrás.",
+    refrain: "Ojo: {P} entra en movimiento retrógrado antes del encuentro; alguien podría echarse atrás.",
     translation: "La Luna lleva la luz de {A} a {B}: alguien o algo hará de puente.",
     moonNext: "La Luna, que te acompaña, se dirige a {asp} con {B} el {date}.",
     voidMoon: "La Luna está fuera de curso: no formará más aspectos antes de dejar {S}.",

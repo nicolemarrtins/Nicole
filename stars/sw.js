@@ -1,9 +1,9 @@
 /* Cielo — offline-first cache for the app shell. Bump VERSION when files change. */
-const VERSION = "cielo-v2";
+const VERSION = "cielo-v3";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/cielo.css",
   "js/vendor/astronomy.browser.min.js", "js/chiron-data.js", "js/astro.js", "js/glyphs.js", "js/places-data.js", "js/places.js", "js/i18n.js",
-  "js/texts-es.js", "js/texts-en.js", "js/texts2-es.js", "js/texts2-en.js", "js/reading.js", "js/deep.js", "js/wheel.js", "js/app.js",
+  "js/texts-es.js", "js/texts-en.js", "js/texts2-es.js", "js/texts2-en.js", "js/texts3-es.js", "js/texts3-en.js", "js/reading.js", "js/deep.js", "js/love.js", "js/wheel.js", "js/app.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"
 ];
 self.addEventListener("install", function (e) {

@@ -453,3 +453,35 @@ textarea { line-height: 1.45; }
 .bopt.right { border-color: var(--flow); box-shadow: inset 0 0 0 1px var(--flow); }
 .bopt.wrong { border-color: var(--tense); }
 .bopt.dim { opacity: .5; }
+
+/* ---------- Cielo 2.1: relationships and dynamic questions ---------- */
+.dims .dim { padding: 10px 0; border-top: 1px solid var(--line); }
+.dims .dim:first-of-type { border-top: 0; }
+.dim-h { display: flex; flex-direction: column; gap: 2px; margin-bottom: 7px; }
+.dim-h b { font: 400 17px var(--serif); }
+.dim-h span { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+.dim-bar { display: flex; height: 7px; border-radius: 4px; background: var(--line); overflow: hidden; gap: 2px; }
+.dim-bar i { display: block; height: 100%; }
+.dim-bar .f { background: var(--flow); } .dim-bar .t { background: var(--tense); }
+.dot.f { background: var(--flow); } .dot.t { background: var(--tense); }
+.two-cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.two-cards .card { margin: 0; }
+@media (max-width: 420px) { .two-cards { grid-template-columns: 1fr; } .two-cards .card + .card { margin-top: 0; } }
+.kicker.ok { color: var(--flow); } .kicker.no { color: var(--tense); }
+.mini-l { list-style: none; padding: 0; margin: 8px 0 0; }
+.mini-l li { font: 400 15px/1.4 var(--serif); padding: 7px 0; border-top: 1px solid var(--line); }
+.mini-l li:first-child { border-top: 0; }
+.mini-l .gl.sg { margin-right: 0; color: var(--text); }
+.mini-l .asp { width: 13px; height: 13px; margin: 0 2px; vertical-align: -0.1em; }
+.two-cards .why { padding-left: 16px; }
+.two-cards .why li { font-size: 15px; }
+.ov .row-t span { color: var(--text); font: 400 15.5px/1.45 var(--serif); display: block; }
+.ov { align-items: flex-start; }
+.ov .rg { margin-top: 3px; }
+details.more { margin: 8px 0; }
+details.more > summary { cursor: pointer; color: var(--accent); font-size: 14px; padding: 8px 0; }
+.comp .kicker .gl { color: var(--accent); }
+.talk .kicker .gl { color: var(--accent); }
+.score { position: relative; height: 6px; border-radius: 3px; margin: 4px 0 14px; background: linear-gradient(90deg, var(--tense), var(--line-2) 50%, var(--flow)); }
+.score i { position: absolute; top: -5px; width: 4px; height: 16px; border-radius: 2px; background: var(--text); transform: translateX(-2px); }
+.v-main { font: italic 400 17px/1.5 var(--serif); color: var(--text); margin: -2px 0 10px; }

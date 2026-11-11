@@ -90,7 +90,8 @@
         case "settings": html = vSettings(); break;
         case "about": html = vAbout(); break;
         case "deep": html = vDeep(); break;
-        case "ask": html = r.a === "horary" ? vHoraryForm() : r.a === "h" ? vHorary(r.b) : r.a === "quiz" ? vQuiz() : r.a === "blind" ? vBlind() : r.a === "prompts" ? vPrompts() : vAskHub(); break;
+        case "ask": html = r.a === "horary" ? vHoraryForm() : r.a === "h" ? vHorary(r.b) : r.a === "quiz" ? vQuiz() : r.a === "blind" ? vBlind() : r.a === "prompts" ? vPrompts() : r.a === "love" ? vLoveTest() : vAskHub(); break;
+        case "love": html = vLove(); break;
         case "here": html = vHere(); break;
         default: html = vToday("");
       }
@@ -99,7 +100,7 @@
       html = header("Cielo") + '<p class="note">' + esc(e.message) + "</p>";
     }
     main.innerHTML = html;
-    var tab = { today: "today", chart: "chart", deep: "chart", people: "people", calendar: "calendar", journal: "journal", ask: "ask" }[r.name] || "";
+    var tab = { today: "today", chart: "chart", deep: "chart", love: "chart", people: "people", calendar: "calendar", journal: "journal", ask: "ask" }[r.name] || "";
     document.querySelectorAll(".tabbar a").forEach(function (a) { a.classList.toggle("on", a.dataset.tab === tab); a.querySelector("span").textContent = U().tabs[a.dataset.tab]; });
     document.body.classList.toggle("no-tabs", !S.me || r.name === "welcome" || r.name === "setup" || r.name === "reveal" || (r.name === "people" && (r.a === "new" || r.b === "edit")));
     var here = location.hash;
@@ -243,6 +244,7 @@
     if (c.houseFallback) o.push('<p class="note">' + g("info") + " " + u.chart.fallback + "</p>");
     o.push(bigThree(c));
     o.push('<a class="card deep-cta" href="#/deep">' + g("spark") + "<span><b>" + u2().deep.cta + "</b><small>" + u2().deep.ctaSub + "</small></span>" + g("fwd", "chev") + "</a>");
+    o.push('<a class="card deep-cta" href="#/love">' + g("venus") + "<span><b>" + X().loveUI.cta + "</b><small>" + X().loveUI.ctaSub + "</small></span>" + g("fwd", "chev") + "</a>");
     if (c.timeKnown) o.push(precisionCard(c));
     // points
     o.push('<section class="block"><h3 class="sh">' + u.chart.points + '</h3><div class="list">' + POINTS2.filter(function (k) { return c.points[k]; }).map(function (k) {
@@ -314,22 +316,50 @@
     return o.join("");
   }
   function vPerson(id) {
-    var u = U(), x = X(), p = person(id); if (!p) return vPeople();
-    var c = chartOf(p), me = chartOf(S.me), syn = Reading.synastry(me, c, p.name, S.lang), o = [];
+    var u = U(), x = X(), u2 = U().syn2, p = person(id); if (!p) return vPeople();
+    var c = chartOf(p), me = chartOf(S.me), cp = Reading.couple(me, c, p.name, S.lang, new Date()), syn = Reading.synastry(me, c, p.name, S.lang), o = [];
+    var myName = esc(S.me.name || (S.lang === "es" ? "Tú" : "You"));
     o.push(header(esc(p.name), { back: "#/people", kicker: p.rel ? u.rel[p.rel] : "", right: '<a class="ib" href="#/people/' + id + '/edit" aria-label="' + u.people.edit + '">' + g("gear") + "</a>" }));
     o.push('<div class="wheel-wrap small">' + Wheel.svg(c, { names: names() }) + "</div>" + bigThree(c, { link: false }));
     o.push('<p class="meta">' + esc(fmt(u.chart.born, { date: fmtBirthDate(p), time: c.timeKnown ? p.time : u.chart.noTimeShort, off: Sky.fmtOffset(c.offset), place: Places.label(p.place, S.lang) })) + "</p>");
-    o.push('<section class="block"><h3 class="sh">' + fmt(u.syn.title, { a: esc(S.me.name || (S.lang === "es" ? "Tú" : "You")), b: esc(p.name) }) + "</h3>" + (syn.summary ? '<p class="lede-s">' + syn.summary + "</p>" : ""));
+    o.push('<section class="block"><h3 class="sh">' + fmt(u.syn.title, { a: myName, b: esc(p.name) }) + "</h3>" + (syn.summary ? '<p class="lede-s">' + syn.summary + "</p>" : ""));
+    // dimensions
+    o.push('<div class="card dims"><div class="kicker">' + u2.dims + "</div>" + Object.keys(cp.dims).map(function (d) {
+      var dm = cp.dims[d], tot = Math.max(1.6, dm.f + dm.t), fw = Math.round(dm.f / tot * 100), tw = Math.round(dm.t / tot * 100);
+      return '<div class="dim ' + dm.level + '"><div class="dim-h"><b>' + x.dims.names[d] + "</b><span>" + esc(x.dims.level[d][dm.level]) + '</span></div><div class="dim-bar"><i class="f" style="width:' + fw + '%"></i><i class="t" style="width:' + tw + '%"></i></div></div>';
+    }).join("") + '<p class="muted small"><span class="dot f"></span> ' + u2.flowWord + ' &nbsp; <span class="dot t"></span> ' + u2.tensionWord + "</p></div>");
+    // strengths and challenges
+    function mini(list) { return list.length ? "<ul class=\"mini-l\">" + list.map(function (s2) { return "<li>" + g(s2.a, "sg") + g(s2.key, "asp") + g(s2.b, "sg") + " " + esc(s2.topic) + "</li>"; }).join("") + "</ul>" : '<p class="muted small">' + u2.none + "</p>"; }
+    o.push('<div class="two-cards"><div class="card"><div class="kicker ok">' + u2.strengths + "</div>" + mini(cp.strengths) + '</div><div class="card"><div class="kicker no">' + u2.challenges + "</div>" + mini(cp.challenges) + "</div></div>");
+    // elements
     var sb = Reading.balance(me, S.lang).b.elements, ob = Reading.balance(c, S.lang).b.elements;
     o.push('<div class="card duo"><div class="kicker">' + u.syn.elements + '</div><div class="duo-g">' + ["fire", "earth", "air", "water"].map(function (e) {
       var ts = sum(sb), to = sum(ob);
       return '<div class="duo-r"><span>' + x.elements[e].n + '</span><i><em style="width:' + Math.round(sb[e] / ts * 100) + '%"></em></i><i class="b"><em style="width:' + Math.round(ob[e] / to * 100) + '%"></em></i></div>';
-    }).join("") + '</div><p class="muted small"><span class="dot a"></span> ' + esc(S.me.name || (S.lang === "es" ? "Tú" : "You")) + ' &nbsp; <span class="dot b"></span> ' + esc(p.name) + "</p></div>");
-    o.push('<h3 class="sh">' + u.syn.aspects + '</h3><div class="list">' + (syn.items.length ? syn.items.map(function (s) {
-      return '<details class="tr ' + s.nature + '"><summary><span class="tr-g">' + g(s.a) + g(s.key, "asp") + g(s.b) + '</span><span class="tr-t">' + esc(cap(s.left)) + " · " + s.asp + " · " + esc(s.right) +
-        "<small>" + u.syn.dyn[s.nature] + " · " + s.orb + "</small></span></summary><p><b>" + esc(s.topic) + ".</b> " + esc(s.text) + "</p></details>";
+    }).join("") + '</div><p class="muted small"><span class="dot a"></span> ' + myName + ' &nbsp; <span class="dot b"></span> ' + esc(p.name) + "</p></div>");
+    // aspects one by one
+    o.push('<h3 class="sh">' + u2.aspects + '</h3><div class="list">' + (cp.items.length ? cp.items.map(function (s2) {
+      return '<details class="tr ' + s2.nature + '"><summary><span class="tr-g">' + g(s2.a) + g(s2.key, "asp") + g(s2.b) + '</span><span class="tr-t">' + esc(cap(s2.left)) + " · " + s2.asp + " · " + esc(s2.right) +
+        "<small>" + u.syn.dyn[s2.nature] + " · " + s2.orb + "</small></span></summary><p><b>" + esc(s2.topic) + "</b> " + esc(s2.text) + "</p></details>";
     }).join("") : '<p class="muted">' + u.syn.none + "</p>") + "</div></section>");
+    // house overlays
+    o.push('<section class="block"><h3 class="sh">' + u2.overlays + "</h3>" + (cp.theirs ? '<div class="list">' + cp.theirs.map(function (ov) {
+      return '<div class="row ov">' + g(ov.k, "rg") + '<span class="row-t"><span>' + esc(Reading.overlayText(ov.k, ov.house, "theirs", S.lang)) + '</span></span><span class="pill">' + ov.house + "</span></div>";
+    }).join("") + "</div>" : '<p class="muted small">' + u2.noTimeOverlay + "</p>"));
+    if (cp.mine) o.push('<details class="more"><summary>' + u2.overlaysMine + '</summary><div class="list">' + cp.mine.map(function (ov) {
+      return '<div class="row ov">' + g(ov.k, "rg") + '<span class="row-t"><span>' + esc(Reading.overlayText(ov.k, ov.house, "mine", S.lang)) + '</span></span><span class="pill">' + ov.house + "</span></div>";
+    }).join("") + "</div></details>");
+    o.push("</section>");
+    // the composite chart and its cycles
+    o.push('<section class="block"><h3 class="sh">' + u2.composite + '</h3><p class="muted small">' + x.composite.intro + '</p><div class="wheel-wrap small static">' + Wheel.svg(cp.comp, { names: names() }) + "</div>" +
+      ["sun", "moon", "venus"].map(function (k) { return '<article class="card comp"><div class="kicker">' + g(k) + " " + esc(pn(k) + " · " + sname(Sky.signOf(cp.comp.points[k].lon))) + "</div><p>" + esc(cp.compText[k]) + "</p></article>"; }).join("") +
+      '<h3 class="sh">' + u2.compTiming + "</h3>" + (cp.timing.length ? '<div class="list">' + cp.timing.map(function (t) {
+        return '<details class="tr ' + t.nature + '"><summary><span class="tr-g">' + g(t.t) + g(t.key, "asp") + g(t.n) + '</span><span class="tr-t">' + esc(t.title) + "<small>" + (t.win ? winShort(t.win) : "") + "</small></span></summary><p>" + esc(t.text) + "</p>" + (t.win ? winLong(t.win) : "") + "</details>";
+      }).join("") + "</div>" : '<p class="muted small">' + U().year.none + "</p>") + "</section>");
+    // questions to talk about together
+    o.push('<section class="card talk"><div class="kicker">' + g("people") + " " + u2.talk + "</div>" + cp.talk.map(function (t, i) { return promptBox({ id: "couple-" + id + "-" + t.dim + "-" + i, q: t.q }); }).join("") + "</section>");
     o.push(askCard("syn", id));
+    o.push('<a class="card deep-cta" href="#/love">' + g("venus") + "<span><b>" + X().loveUI.cta + "</b><small>" + X().loveUI.ctaSub + "</small></span>" + g("fwd", "chev") + "</a>");
     o.push('<button class="btn ghost danger" data-act="del-person" data-id="' + id + '">' + u.people.delete + "</button>");
     return o.join("");
   }
@@ -580,7 +610,7 @@
   function vAskHub() {
     var u = U().askHub, o = [header(u.title, { kicker: "" })];
     o.push('<p class="lede-s">' + u.sub + "</p>");
-    o.push('<div class="hub">' + [["horary", "ask"], ["quiz", "spark"], ["blind", "people"], ["prompts", "journal"]].map(function (it) {
+    o.push('<div class="hub">' + [["horary", "ask"], ["love", "venus"], ["quiz", "spark"], ["blind", "people"], ["prompts", "journal"]].map(function (it) {
       return '<a href="#/ask/' + it[0] + '">' + g(it[1]) + "<span><b>" + u[it[0]][0] + "</b><span>" + u[it[0]][1] + "</span></span></a>";
     }).join("") + "</div>");
     if (S.questions.length) o.push(horaryHistory(3));
@@ -596,7 +626,8 @@
     var u = U().horary, st = horaryStats(), H = X().horary;
     return '<section class="block"><h3 class="sh">' + u.history + "</h3>" + (S.questions.length ? '<div class="list">' + S.questions.slice(0, max || 50).map(function (q) {
       var pos = q.positive === true ? "pos" : q.positive === false ? "neg" : "";
-      return '<a class="row" href="#/ask/h/' + q.id + '"><span class="vd ' + pos + '">' + g("ask") + '</span><span class="row-t"><b>' + esc(q.q || H.cats[q.cat].n) + "</b><span>" + esc(H.verdict[q.verdict] || "") + " · " + esc(dsh(new Date(q.at))) +
+      var vt = q.special ? H.verdict[q.special] : q.level ? X().horary2.levels[q.level] : (H.verdict[q.verdict] || "");
+      return '<a class="row" href="#/ask/h/' + q.id + '"><span class="vd ' + pos + '">' + g("ask") + '</span><span class="row-t"><b>' + esc(q.q || H.cats[q.cat].n) + "</b><span>" + esc(vt) + " · " + esc(dsh(new Date(q.at))) +
         (q.outcome ? " · " + esc(u.track) + " " + esc(u[q.outcome]) : "") + "</span></span>" + g("fwd", "chev") + "</a>";
     }).join("") + "</div>" : '<p class="muted">' + u.empty + "</p>") + '<p class="muted small">' + (st.n ? fmt(u.score, st) : u.scoreNone) + "</p></section>";
   }
@@ -604,7 +635,7 @@
     var u = U().horary, H = X().horary, pl = herePlace(), o = [header(u.title, { back: "#/ask" })];
     o.push('<p class="muted small">' + u.tip + "</p>");
     o.push('<div class="kicker">' + u.cat + '</div><div class="chips cats">' + Object.keys(H.cats).map(function (k) { return '<button class="chip' + (HF.cat === k ? " on" : "") + '" data-act="h-cat" data-v="' + k + '">' + H.cats[k].n + "</button>"; }).join("") + "</div>");
-    o.push('<label class="fl"><span>' + u.q + '</span><textarea id="h-q" rows="3" maxlength="240" placeholder="' + esc(u.ph) + '"></textarea></label>');
+    o.push('<label class="fl"><span>' + u.q + '</span><textarea id="h-q" rows="3" maxlength="240" placeholder="' + esc(u.ph) + '"></textarea></label><p class="muted small" id="h-det"></p>');
     o.push('<p class="where">' + g("star") + " " + u.where + ": <b>" + esc(Places.label(pl, S.lang)) + '</b> <a href="#/here">' + u.change + "</a></p>");
     o.push('<button class="btn primary wide" data-act="h-go">' + g("ask") + " " + u.go + "</button>");
     o.push('<p class="fine">' + H.disclaimer + "</p>");
@@ -612,20 +643,67 @@
     return o.join("");
   }
   function vHorary(id) {
-    var u = U().horary, H = X().horary, q = S.questions.filter(function (x) { return x.id === id; })[0];
+    var u = U().horary, H = X().horary, H2 = X().horary2, q = S.questions.filter(function (x) { return x.id === id; })[0];
     if (!q) return vHoraryForm();
-    var res = Reading.horary(new Date(q.at), q.place, q.cat, S.lang), o = [header(u.title, { back: "#/ask/horary" })];
+    var res = Reading.horary2(new Date(q.at), q.place, q.cat, q.q, S.lang), o = [header(u.title, { back: "#/ask/horary" })];
     o.push('<p class="kicker">' + esc(H.cats[q.cat].n) + " · " + esc(fmt(u.asked, { date: dfmt(new Date(q.at), { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }), place: Places.label(q.place, S.lang) })) + "</p>");
     if (q.q) o.push('<p class="qtext">«' + esc(q.q) + "»</p>");
-    o.push('<div class="kicker">' + u.result + '</div><h2 class="verdict ' + (res.positive === true ? "pos" : res.positive === false ? "neg" : "") + '">' + esc(res.verdictText) + "</h2>");
-    if (res.timing && res.positive) o.push('<p class="muted">' + esc(fmt(H.timing, { date: Reading.dlong(res.timing, S.lang) })) + "</p>");
-    o.push('<section class="block"><h3 class="sh">' + u.why + '</h3><ul class="why">' + res.lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></section>");
-    o.push('<section class="block"><h3 class="sh">' + u.chart + '</h3><div class="wheel-wrap small static">' + Wheel.svg(res.chart, { names: names() }) + "</div></section>");
+    var prev = S.questions.filter(function (o2) { return o2.id !== q.id && o2.cat === q.cat && o2.at < q.at && q.at - o2.at < 120 * 60000; })[0];
+    if (prev) o.push('<p class="note">' + g("info") + " " + esc(fmt(H2.repeat, { cat: H.cats[q.cat].n.toLowerCase(), n: Math.max(1, Math.round((q.at - prev.at) / 60000)) })) + "</p>");
+    var tone = res.special ? "" : res.group === "pos" ? "pos" : res.group === "neg" ? "neg" : "";
+    o.push('<div class="kicker">' + u.result + " · " + esc(H2.types[res.type]) + '</div><h2 class="verdict ' + tone + '">' + esc(res.special ? H.verdict[res.special] : res.verdict) + "</h2>");
+    if (res.main) o.push('<p class="v-main">' + esc(res.main) + "</p>");
+    if (res.special) o.push('<p class="muted">' + esc(res.specialText) + " " + esc(fmt(H2.levels[res.level] ? "(" + H2.levels[res.level] + ")" : "", {})) + "</p>");
+    o.push('<div class="score"><i style="left:' + Math.max(2, Math.min(98, 50 + res.score * 8)) + '%"></i></div>');
+    if (res.feel) o.push('<section class="card"><div class="kicker">' + g("venus") + " " + H2.feelTitle + "</div><p>" + esc(res.feel.state) + "</p><p><b>" + esc(res.feel.toYou) + "</b>" + (res.feel.rec ? " " + esc(res.feel.rec) : "") + "</p></section>");
+    if (res.when) o.push('<section class="card"><div class="kicker">' + g("calendar") + " " + H2.whenTitle + "</div>" + res.when.map(function (w) { return "<p>" + esc(w) + "</p>"; }).join("") + "</section>");
+    if (res.should) o.push('<section class="card"><div class="kicker">' + g("ask") + " " + H2.shouldTitle + "</div><p><b>" + esc(res.should) + "</b></p></section>");
+    o.push('<div class="two-cards"><div class="card"><div class="kicker ok">' + H2.pro + '</div><ul class="why">' + (res.pro.length ? res.pro.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") : "<li>—</li>") + '</ul></div><div class="card"><div class="kicker no">' + H2.con + '</div><ul class="why">' + (res.con.length ? res.con.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") : "<li>—</li>") + "</ul></div></div>");
+    o.push('<section class="card"><div class="kicker">' + H2.adviceTitle + '</div><p class="lede-s">' + esc(res.advice) + "</p></section>");
+    o.push('<section class="block"><h3 class="sh">' + u.sigs + '</h3><ul class="why">' + res.sigs.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul></section>");
+    o.push('<section class="block"><h3 class="sh">' + u.chart + '</h3><p class="muted small">' + esc(fmt(H2.moment, { time: tfmt(new Date(q.at)) })) + '</p><div class="wheel-wrap small static">' + Wheel.svg(res.chart, { names: names() }) + "</div></section>");
+    o.push('<button class="btn primary wide" data-act="ask-h" data-id="' + q.id + '">' + g("spark") + " " + H2.claude + '</button><p class="muted small">' + H2.claudeNote + "</p>");
     o.push('<section class="card"><div class="kicker">' + u.track + '</div><div class="seg outcome">' + ["yes", "no", "pending"].map(function (k) {
       return '<button class="' + ((q.outcome || "pending") === k ? "on" : "") + '" data-act="h-outcome" data-id="' + q.id + '" data-v="' + k + '">' + u[k] + "</button>";
     }).join("") + '</div><p class="muted small">' + (horaryStats().n ? fmt(u.score, horaryStats()) : u.scoreNone) + "</p></section>");
     o.push('<p class="fine">' + H.disclaimer + "</p>");
     o.push('<button class="btn ghost danger" data-act="h-del" data-id="' + q.id + '">' + u.del + "</button>");
+    return o.join("");
+  }
+  var LT = null;
+  function vLoveTest() {
+    var T = X().loveTest, u = U().quizUI, o = [header(T.title, { back: "#/ask" })];
+    if (!LT) { o.push('<section class="card center qz-intro">' + g("venus", "big-g") + '<p class="lede-s">' + T.intro + '</p><button class="btn primary wide" data-act="lt-start">' + u.start + "</button></section>"); return o.join(""); }
+    if (LT.i >= T.qs.length) {
+      var n = LT.ans.filter(function (a) { return a.match; }).length, t = T.qs.length;
+      o.push('<section class="card center"><div class="score-big">' + n + " / " + t + '</div><p class="lede-s">' + fmt(T.result, { n: n, t: t }) + " " + (n >= 4 ? T.resultHigh : n >= 2 ? T.resultMid : T.resultLow) + "</p>" +
+        '<a class="btn primary wide" href="#/love">' + X().loveUI.cta + '</a><button class="btn ghost wide" data-act="lt-start">' + u.again + "</button></section>");
+      o.push('<section class="block"><div class="list">' + LT.ans.map(function (a, i) { return '<div class="row ans"><span class="row-t"><b>' + esc(T.qs[i].q) + " " + (a.match ? "✓" : "·") + "</b><span>" + esc(a.text) + "</span></span></div>"; }).join("") + "</div></section>");
+      return o.join("");
+    }
+    var q = T.qs[LT.i], done = LT.picked != null;
+    o.push('<div class="kicker">' + fmt(u.q, { i: LT.i + 1, n: T.qs.length }) + '</div><div class="prog"><i style="width:' + Math.round(LT.i / T.qs.length * 100) + '%"></i></div>');
+    o.push('<h2 class="quiz-q">' + esc(q.q) + '</h2><div class="opts">' + Object.keys(q.o).map(function (k) {
+      var cls = done ? (k === LT.picked ? (LT.cur.match ? " right" : " wrong") : " dim") : "";
+      return '<button class="opt' + cls + '" data-act="lt-pick" data-v="' + k + '"' + (done ? " disabled" : "") + ">" + esc(q.o[k]) + "</button>";
+    }).join("") + "</div>");
+    if (done) o.push('<p class="fb ' + (LT.cur.match ? "ok" : "no") + '">' + esc(LT.cur.text) + '</p><button class="btn primary wide" data-act="lt-next">' + (LT.i + 1 < T.qs.length ? u.next : u.finish) + "</button>");
+    return o.join("");
+  }
+  function vLove() {
+    var L = X().loveUI, c = chartOf(S.me), pr = Reading.loveProfile(c, S.lang, new Date()), o = [header(L.title, { back: "#/chart", kicker: esc(S.me.name || "") })];
+    function sec(title, glyphKey, paras) { return paras && paras.length ? '<section class="deep-sec"><h2 class="ds-h">' + g(glyphKey, "ds-g") + "<span>" + title + "</span></h2>" + paras.map(function (p2) { return "<p>" + esc(p2) + "</p>"; }).join("") + "</section>" : ""; }
+    o.push(sec(L.seek, "venus", pr.seek));
+    if (pr.partner) o.push(sec(L.partner, "people", pr.partner));
+    o.push(sec(L.give, "moon", pr.give));
+    o.push(sec(L.desire, "mars", pr.desire));
+    o.push(sec(L.shadow, "lilith", pr.shadow));
+    o.push(sec(L.care, "star", [pr.care]));
+    o.push('<section class="deep-sec"><h2 class="ds-h">' + g("calendar", "ds-g") + "<span>" + L.windows + "</span></h2>" + (pr.windows.length ? '<div class="list">' + pr.windows.map(function (t) {
+      return '<details class="tr ' + t.nature + '"><summary><span class="tr-g">' + g(t.t) + g(t.key, "asp") + g(t.n === "dsc" ? "asc" : t.n === "r7" ? "star" : t.n) + '</span><span class="tr-t">' + esc(t.title) + "<small>" + (t.win ? winShort(t.win) : "") + "</small></span></summary><p>" + esc(t.text) + "</p>" + (t.win ? winLong(t.win) : "") + "</details>";
+    }).join("") + "</div>" : "<p>" + esc(L.noWindows) + "</p>") + pr.extra.map(function (e) { return '<p class="note">' + g("info") + " " + esc(e) + "</p>"; }).join("") + "</section>");
+    o.push('<a class="card deep-cta" href="#/ask/love">' + g("ask") + "<span><b>" + X().loveTest.title + "</b><small>" + U().askHub.love[1] + "</small></span>" + g("fwd", "chev") + "</a>");
+    o.push(askCard("love", ""));
     return o.join("");
   }
   var QZ = null;
@@ -729,7 +807,9 @@
     var q = (document.getElementById("ask-q") || {}).value || "", text;
     var me = S.me, c = chartOf(me);
     if (kind === "chart") text = Reading.promptChart(me, c, q.trim(), S.lang);
-    else if (kind === "syn") { var p = person(id); if (!p) return; var pc = chartOf(p); text = Reading.promptSyn(me, c, p, pc, Reading.synastry(c, pc, p.name, S.lang), p.name, q.trim(), S.lang); }
+    else if (kind === "syn") { var p = person(id); if (!p) return; var pc = chartOf(p); text = Reading.promptCouple(c, me, pc, p, Reading.couple(c, pc, p.name, S.lang, new Date()), p.name, q.trim(), S.lang); }
+    else if (kind === "horary") { var hq = S.questions.filter(function (x) { return x.id === id; })[0]; if (!hq) return; text = Reading.promptHorary(hq, Reading.horary2(new Date(hq.at), hq.place, hq.cat, hq.q, S.lang), S.lang); }
+    else if (kind === "love") text = Reading.promptChart(me, c, q.trim() || (S.lang === "es" ? "Dame una lectura profunda de mi forma de amar y de la pareja que me conviene, con lo que activa este año." : "Give me a deep reading of how I love and what kind of partner suits me, including what this year activates."), S.lang);
     else text = Reading.promptDay(me, c, Reading.daily(c, parseDay(id) || new Date(), S.lang), q.trim(), S.lang);
     try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () { }); } catch (e) { }
     window.open("https://claude.ai/new?q=" + encodeURIComponent(text), "_blank", "noopener");
@@ -788,13 +868,21 @@
     if (act === "h-cat") { HF.cat = v; document.querySelectorAll(".cats .chip").forEach(function (b) { b.classList.toggle("on", b === el); }); return; }
     if (act === "h-go") {
       var qtxt = (document.getElementById("h-q").value || "").trim().slice(0, 240), pl = herePlace(), now = new Date();
-      var res = Reading.horary(now, pl, HF.cat, S.lang), id = uid();
-      S.questions.unshift({ id: id, q: qtxt, cat: HF.cat, at: now.getTime(), place: { name: pl.name, region: pl.region || "", cc: pl.cc || "", lat: pl.lat, lng: pl.lng, tz: pl.tz }, verdict: res.verdict, positive: res.positive, outcome: null });
+      var res = Reading.horary2(now, pl, HF.cat, qtxt, S.lang), id = uid();
+      S.questions.unshift({ id: id, q: qtxt, cat: HF.cat, at: now.getTime(), place: { name: pl.name, region: pl.region || "", cc: pl.cc || "", lat: pl.lat, lng: pl.lng, tz: pl.tz }, level: res.level, special: res.special, positive: res.positive, outcome: null });
       save(); location.hash = "#/ask/h/" + id; return;
     }
     if (act === "h-outcome") { var hq = S.questions.filter(function (q) { return q.id === el.dataset.id; })[0]; if (hq) { hq.outcome = v === "pending" ? null : v; save(); render(); } return; }
     if (act === "h-del") { S.questions = S.questions.filter(function (q) { return q.id !== el.dataset.id; }); save(); location.hash = "#/ask/horary"; return; }
-    if (act === "quiz-start") { QZ = { qs: Reading.quiz(chartOf(S.me), S.lang), i: 0, score: 0, picked: null }; render(); return; }
+    if (act === "quiz-start") {
+      var mine = chartOf(S.me), ppl = S.people.slice().sort(function (a, b) { return (b.rel === "partner") - (a.rel === "partner"); }).map(function (pp) { return { name: pp.name, chart: chartOf(pp) }; });
+      QZ = { qs: Reading.quiz(mine, S.lang, { people: ppl, me: mine, now: new Date(), seen: S.quizSeen || [] }), i: 0, score: 0, picked: null };
+      S.quizSeen = QZ.qs.map(function (q) { return q.q; }).concat(S.quizSeen || []).slice(0, 24); save(); render(); return;
+    }
+    if (act === "ask-h") { ask("horary", el.dataset.id); return; }
+    if (act === "lt-start") { LT = { i: 0, picked: null, cur: null, ans: [] }; render(); window.scrollTo(0, 0); return; }
+    if (act === "lt-pick") { if (LT && LT.picked == null) { LT.picked = v; LT.cur = Reading.loveAnswer(chartOf(S.me), LT.i, v, S.lang); LT.ans.push(LT.cur); render(); } return; }
+    if (act === "lt-next") { if (LT) { LT.i++; LT.picked = null; LT.cur = null; if (LT.i >= X().loveTest.qs.length) { S.loveRuns = (S.loveRuns || []).concat([{ at: Date.now(), n: LT.ans.filter(function (a) { return a.match; }).length }]).slice(-20); save(); } render(); window.scrollTo(0, 0); } return; }
     if (act === "quiz-pick") { if (QZ && QZ.picked == null) { QZ.picked = +v; if (QZ.picked === QZ.qs[QZ.i].right) QZ.score++; render(); } return; }
     if (act === "quiz-next") { if (QZ) { QZ.i++; QZ.picked = null; if (QZ.i >= QZ.qs.length && QZ.score > S.quizBest) { S.quizBest = QZ.score; save(); } render(); window.scrollTo(0, 0); } return; }
     if (act === "blind-start") { BL = { rounds: Reading.blindRounds(chartOf(S.me), S.lang), i: 0, hits: 0, picked: null }; render(); return; }
@@ -849,6 +937,12 @@
   document.addEventListener("input", function (ev) {
     var t = ev.target;
     if (t.id === "place-q") { var q = t.value.trim(); suggest(Places.search(q, S.lang), q); return; }
+    if (t.id === "h-q") {
+      var dc = Reading.detectCat(t.value, S.lang), det = document.getElementById("h-det");
+      if (dc && dc !== HF.cat) { HF.cat = dc; document.querySelectorAll(".cats .chip").forEach(function (b) { b.classList.toggle("on", b.dataset.v === dc); }); }
+      if (det) det.textContent = t.value.trim().length < 4 ? "" : (dc ? fmt(X().horary2.detected, { cat: X().horary.cats[dc].n }) + " · " : "") + X().horary2.types[Reading.detectType(t.value, S.lang)];
+      return;
+    }
     if (formEl() && formEl().contains(t) && t.name !== "q") preview();
   });
   document.addEventListener("submit", function (ev) { if (ev.target.id === "bform") { ev.preventDefault(); submitForm(); } });
